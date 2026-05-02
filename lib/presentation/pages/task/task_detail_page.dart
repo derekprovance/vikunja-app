@@ -70,6 +70,56 @@ class _TaskDetailPageState extends ConsumerState<TaskDetailPage> {
     }
   }
 
+  Widget _buildTaskHeader(ThemeData theme, AppLocalizations l10n) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 16),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Expanded(
+            child: AnimatedDefaultTextStyle(
+              duration: const Duration(milliseconds: 200),
+              style: theme.textTheme.headlineSmall!.copyWith(
+                decoration: _task.done ? TextDecoration.lineThrough : TextDecoration.none,
+                decorationColor: theme.colorScheme.onSurface.withValues(alpha: 0.45),
+                color: _task.done
+                    ? theme.colorScheme.onSurface.withValues(alpha: 0.45)
+                    : theme.colorScheme.onSurface,
+              ),
+              child: Text(_task.title),
+            ),
+          ),
+          const SizedBox(width: 12),
+          Tooltip(
+            message: l10n.done,
+            child: InkWell(
+              onTap: _isTogglingDone ? null : _toggleDone,
+              borderRadius: BorderRadius.circular(22),
+              child: AnimatedContainer(
+                duration: const Duration(milliseconds: 300),
+                curve: Curves.easeOut,
+                width: 44,
+                height: 44,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  border: Border.all(color: theme.colorScheme.primary, width: 2),
+                  color: _task.done ? theme.colorScheme.primary : Colors.transparent,
+                ),
+                child: AnimatedSwitcher(
+                  duration: const Duration(milliseconds: 200),
+                  child: _task.done
+                      ? Icon(Icons.check, key: const ValueKey('check'),
+                          color: theme.colorScheme.onPrimary, size: 22)
+                      : const SizedBox.shrink(key: ValueKey('empty')),
+                ),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
@@ -83,24 +133,11 @@ class _TaskDetailPageState extends ConsumerState<TaskDetailPage> {
       child: Scaffold(
         appBar: AppBar(
           title: Text(
-            _task.title,
-            overflow: TextOverflow.ellipsis,
-            style: _task.done
-                ? const TextStyle(decoration: TextDecoration.lineThrough)
-                : null,
+            _task.identifier.isNotEmpty ? _task.identifier : l10n.taskDetail,
           ),
-          actions: [
-            IconButton(
-              icon: Icon(
-                _task.done ? Icons.check_circle : Icons.check_circle_outline,
-              ),
-              onPressed: _toggleDone,
-              tooltip: l10n.done,
-            ),
-          ],
         ),
         body: ListView(
-          padding: const EdgeInsets.fromLTRB(16, 4, 16, 80),
+          padding: const EdgeInsets.fromLTRB(16, 16, 16, 80),
           children: _buildContent(context, l10n, theme),
         ),
         floatingActionButton: FloatingActionButton(
@@ -118,6 +155,11 @@ class _TaskDetailPageState extends ConsumerState<TaskDetailPage> {
     ThemeData theme,
   ) {
     final widgets = <Widget>[];
+
+    // Task title + done checkmark
+    widgets.add(_buildTaskHeader(theme, l10n));
+
+    // Future slot: status chips (todo/in-progress/done) go here when API supports it
 
     // Labels at the top (if any)
     if (_task.labels.isNotEmpty) {
