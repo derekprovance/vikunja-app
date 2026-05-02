@@ -46,8 +46,9 @@ class Project {
     bool? isFavourite,
     int? doneBucketId,
     double? position,
+    List<ProjectView>? views,
   }) {
-    return Project(
+    final copy = Project(
       id: id ?? this.id,
       created: created ?? this.created,
       updated: updated ?? this.updated,
@@ -59,6 +60,9 @@ class Project {
       isArchived: isArchived ?? this.isArchived,
       isFavourite: isFavourite ?? this.isFavourite,
       position: position ?? this.position,
+      views: views ?? this.views,
     );
+    copy.subprojects = subprojects;
+    return copy;
   }
 }

@@ -318,7 +318,7 @@ class KanbanWidgetState extends ConsumerState<KanbanWidget> {
         return;
       } else if (toIndex == -1) {
         //If dropped to another bucket without selecting position - Put at front
-        toIndex == 0;
+        toIndex = 0;
       }
 
       final task = fromBucket.tasks.removeAt(fromIndex);

@@ -29,8 +29,6 @@ mixin PaginationMixin<T> {
     loadingNextPage = true;
     final nextPage = _currentPage + 1;
 
-    await Future.delayed(Duration(seconds: 3));
-
     try {
       final response = await fetcher(nextPage);
       if (response.isSuccessful) {
