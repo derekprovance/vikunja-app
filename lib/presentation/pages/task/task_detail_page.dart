@@ -162,6 +162,7 @@ class _TaskDetailPageState extends ConsumerState<TaskDetailPage> {
           children: _buildContent(context, l10n, theme),
         ),
         floatingActionButton: FloatingActionButton(
+          heroTag: null,
           onPressed: _openEdit,
           tooltip: l10n.edit,
           child: const Icon(Icons.edit_outlined),

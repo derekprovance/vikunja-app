@@ -108,6 +108,7 @@ class TaskEditPageState extends ConsumerState<TaskEditPage> {
         floatingActionButton: _isLoading
             ? null
             : FloatingActionButton(
+                heroTag: null,
                 onPressed: () {
                   if (_formKey.currentState?.validate() == true) {
                     _saveTask(ctx);

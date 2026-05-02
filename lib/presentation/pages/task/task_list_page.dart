@@ -429,6 +429,7 @@ class _TaskListPageState extends ConsumerState<TaskListPage> {
 
   Widget _buildAllTasksFab(TaskPageModel model) {
     return FloatingActionButton(
+      heroTag: null,
       onPressed: () {
         if (model.defaultProjectId == 0) {
           ScaffoldMessenger.of(context).showSnackBar(
@@ -453,6 +454,7 @@ class _TaskListPageState extends ConsumerState<TaskListPage> {
     }
 
     return FloatingActionButton(
+      heroTag: null,
       onPressed: () => _addProjectTaskDialog(project),
       child: const Icon(Icons.add),
     );
