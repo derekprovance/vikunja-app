@@ -2,9 +2,7 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:flutter_widget_from_html/flutter_widget_from_html.dart';
 import 'package:vikunja_app/core/di/network_provider.dart';
-import 'package:vikunja_app/core/utils/misc.dart';
 import 'package:vikunja_app/core/di/notification_provider.dart';
 import 'package:vikunja_app/domain/entities/project.dart';
 import 'package:vikunja_app/domain/entities/task.dart';
@@ -55,48 +53,24 @@ class ProjectPageState extends ConsumerState<ProjectDetailPage> {
       data: (data) {
         return Scaffold(
           appBar: _buildAppBar(context, data.project, data.displayDoneTask),
-          body: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              if (stripHtml(data.project.description).isNotEmpty) ...[
-                Padding(
-                  padding: const EdgeInsets.fromLTRB(16, 12, 16, 4),
-                  child: Text(
-                    AppLocalizations.of(context).description,
-                    style: Theme.of(context).textTheme.labelLarge,
-                  ),
-                ),
-                Padding(
-                  padding: const EdgeInsets.fromLTRB(20, 0, 16, 12),
-                  child: HtmlWidget(data.project.description),
-                ),
-              ],
-              Expanded(
-                child: NotificationListener<ScrollNotification>(
-                  onNotification: (ScrollNotification scrollInfo) {
-                    if (scrollInfo.metrics.pixels ==
-                        scrollInfo.metrics.maxScrollExtent) {
-                      ref
-                          .read(
-                            projectControllerProvider(widget.project).notifier,
-                          )
-                          .loadNextPage();
-                    }
-                    return false;
-                  },
-                  child: RefreshIndicator(
-                    onRefresh: () {
-                      return ref
-                          .read(
-                            projectControllerProvider(widget.project).notifier,
-                          )
-                          .loadForView(data.project, _viewIndex);
-                    },
-                    child: getBody(data.project),
-                  ),
-                ),
-              ),
-            ],
+          body: NotificationListener<ScrollNotification>(
+            onNotification: (ScrollNotification scrollInfo) {
+              if (scrollInfo.metrics.pixels ==
+                  scrollInfo.metrics.maxScrollExtent) {
+                ref
+                    .read(projectControllerProvider(widget.project).notifier)
+                    .loadNextPage();
+              }
+              return false;
+            },
+            child: RefreshIndicator(
+              onRefresh: () {
+                return ref
+                    .read(projectControllerProvider(widget.project).notifier)
+                    .loadForView(data.project, _viewIndex);
+              },
+              child: getBody(data.project),
+            ),
           ),
           floatingActionButton: _buildFab(data.project),
           bottomNavigationBar: _buildBottomNavigation(data.project),
