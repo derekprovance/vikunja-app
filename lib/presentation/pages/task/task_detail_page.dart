@@ -4,7 +4,9 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_widget_from_html/flutter_widget_from_html.dart';
 import 'package:vikunja_app/core/di/repository_provider.dart';
 import 'package:vikunja_app/core/utils/date_extensions.dart';
+import 'package:vikunja_app/core/utils/misc.dart';
 import 'package:vikunja_app/core/utils/priority.dart';
+import 'package:vikunja_app/core/utils/repeat_after_parse.dart';
 import 'package:vikunja_app/domain/entities/task.dart';
 import 'package:vikunja_app/l10n/gen/app_localizations.dart';
 import 'package:vikunja_app/presentation/pages/task/task_comments_page.dart';
@@ -253,6 +255,13 @@ class _TaskDetailPageState extends ConsumerState<TaskDetailPage> {
       widgets.add(const SizedBox(height: 8));
     }
 
+    // Info section at the bottom
+    final infoSection = _buildInfoSection(l10n, theme);
+    if (infoSection != null) {
+      widgets.add(infoSection);
+      widgets.add(const SizedBox(height: 8));
+    }
+
     return widgets;
   }
 
@@ -306,6 +315,74 @@ class _TaskDetailPageState extends ConsumerState<TaskDetailPage> {
     }
 
     return rows;
+  }
+
+  Widget? _buildInfoSection(AppLocalizations l10n, ThemeData theme) {
+    final rows = <({String label, String value})>[];
+
+    // Created by + date — only if timestamp is real (not year-0001 sentinel)
+    if (_task.created.year > 1) {
+      final createdBy = _task.createdBy;
+      final authorName = createdBy != null
+          ? (createdBy.name.isNotEmpty ? createdBy.name : createdBy.username)
+          : null;
+      final createdLabel = authorName != null
+          ? '$authorName · ${_task.created.toLocal().formatShort()}'
+          : _task.created.toLocal().formatShort();
+      rows.add((label: l10n.taskInfoCreatedBy, value: createdLabel));
+    }
+
+    // Last updated (relative) — only if timestamp is real.
+    // durationToHumanReadable expects target.difference(now): negative=past ("X ago"),
+    // positive=future ("in X"). Treat tiny |delta| (incl. clock skew) as "Just now".
+    if (_task.updated.year > 1) {
+      final delta = _task.updated.difference(DateTime.now());
+      final relative = delta.inSeconds.abs() < 5
+          ? l10n.justNow
+          : durationToHumanReadable(delta);
+      rows.add((label: l10n.taskInfoUpdated, value: relative));
+    }
+
+    // Repeat interval — only if set
+    final repeat = _task.repeatAfter;
+    if (repeat != null && repeat.inSeconds > 0) {
+      final value = getRepeatAfterValueFromDuration(repeat);
+      final unit = getRepeatAfterTypeFromDuration(repeat);
+      rows.add((
+        label: l10n.taskInfoRepeats,
+        value: '$value ${unit.toLocalizedString(context)}',
+      ));
+    }
+
+    if (rows.isEmpty) return null;
+
+    final mutedStyle = theme.textTheme.bodySmall?.copyWith(
+      color: theme.colorScheme.onSurfaceVariant,
+    );
+
+    return Card(
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: rows.map((row) {
+            return Padding(
+              padding: const EdgeInsets.only(bottom: 4),
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  SizedBox(
+                    width: 96,
+                    child: Text(row.label, style: mutedStyle),
+                  ),
+                  Expanded(child: Text(row.value, style: mutedStyle)),
+                ],
+              ),
+            );
+          }).toList(),
+        ),
+      ),
+    );
   }
 
   Widget _buildSpeedDial(AppLocalizations l10n, ThemeData theme) {

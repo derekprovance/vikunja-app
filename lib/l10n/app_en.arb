@@ -79,6 +79,22 @@
   "endDateLabel": "End Date",
   "reminder": "Reminder",
   "addReminder": "Add a reminder",
+  "justNow": "Just now",
+  "@justNow": {
+    "description": "Relative time shown when something happened within the last few seconds, or for clock-skew cases where the timestamp is slightly in the future."
+  },
+  "taskInfoCreatedBy": "Created by",
+  "@taskInfoCreatedBy": {
+    "description": "Label in the task detail info card preceding the author name and creation date."
+  },
+  "taskInfoUpdated": "Updated",
+  "@taskInfoUpdated": {
+    "description": "Label in the task detail info card preceding a relative time like '2 hours ago'."
+  },
+  "taskInfoRepeats": "Repeats",
+  "@taskInfoRepeats": {
+    "description": "Label in the task detail info card preceding a repeat interval like '2 Weeks'."
+  },
   "setColor": "Set Color",
   "currentVersionPrefix": "Current version: {version}",
   "@currentVersionPrefix": {
