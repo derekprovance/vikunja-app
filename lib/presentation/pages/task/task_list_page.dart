@@ -26,6 +26,57 @@ import 'package:vikunja_app/presentation/pages/task/task_detail_page.dart';
 
 enum _TaskSection { overdue, today, tomorrow, thisWeek, later, noDueDate }
 
+// Pure testable functions
+Map<_TaskSection, List<Task>> _groupTasks(List<Task> tasks) {
+  final now = DateTime.now();
+  final todayStart = DateTime(now.year, now.month, now.day);
+  final tomorrowStart = todayStart.add(const Duration(days: 1));
+  final dayAfterTomorrowStart = todayStart.add(const Duration(days: 2));
+  final weekEnd = todayStart.add(const Duration(days: 7));
+
+  final grouped = <_TaskSection, List<Task>>{};
+  for (final section in _TaskSection.values) {
+    grouped[section] = [];
+  }
+
+  for (final task in tasks) {
+    if (!task.hasDueDate) {
+      grouped[_TaskSection.noDueDate]!.add(task);
+    } else {
+      final dueDate = DateTime(
+        task.dueDate!.year,
+        task.dueDate!.month,
+        task.dueDate!.day,
+      );
+      if (dueDate.isBefore(todayStart)) {
+        grouped[_TaskSection.overdue]!.add(task);
+      } else if (dueDate == todayStart) {
+        grouped[_TaskSection.today]!.add(task);
+      } else if (dueDate == tomorrowStart) {
+        grouped[_TaskSection.tomorrow]!.add(task);
+      } else if (!dueDate.isBefore(dayAfterTomorrowStart) &&
+          dueDate.isBefore(weekEnd)) {
+        grouped[_TaskSection.thisWeek]!.add(task);
+      } else {
+        grouped[_TaskSection.later]!.add(task);
+      }
+    }
+  }
+
+  return grouped;
+}
+
+String _getSectionTitle(AppLocalizations l10n, _TaskSection section) {
+  return switch (section) {
+    _TaskSection.overdue => l10n.overdue,
+    _TaskSection.today => l10n.today,
+    _TaskSection.tomorrow => l10n.tomorrow,
+    _TaskSection.thisWeek => l10n.thisWeek,
+    _TaskSection.later => l10n.later,
+    _TaskSection.noDueDate => l10n.noDueDate,
+  };
+}
+
 class TaskListPage extends ConsumerStatefulWidget {
   const TaskListPage({super.key});
 
@@ -34,14 +85,23 @@ class TaskListPage extends ConsumerStatefulWidget {
 }
 
 class _TaskListPageState extends ConsumerState<TaskListPage> {
-  Project? _selectedProject;
+  int? _selectedProjectId;
   int _viewIndex = 0;
+
+  Project? _getSelectedProject(List<Project> projects) {
+    if (_selectedProjectId == null) return null;
+    final allProjects = projects.expand((p) => [p, ...p.subprojects]);
+    for (final project in allProjects) {
+      if (project.id == _selectedProjectId) return project;
+    }
+    return null;
+  }
 
   @override
   Widget build(BuildContext context) {
-    final selectedProject = _selectedProject;
+    final selectedProjectId = _selectedProjectId;
 
-    if (selectedProject == null) {
+    if (selectedProjectId == null) {
       // All Tasks branch
       final pageModel = ref.watch(taskPageControllerProvider);
       return pageModel.when(
@@ -64,30 +124,69 @@ class _TaskListPageState extends ConsumerState<TaskListPage> {
         loading: () => const LoadingWidget(),
       );
     } else {
-      // Project branch
-      final projectAsync = ref.watch(projectControllerProvider(selectedProject));
-      return projectAsync.when(
-        data: (data) => Scaffold(
-          appBar: _buildProjectAppBar(data.project, data.displayDoneTask),
-          body: NotificationListener<ScrollNotification>(
-            onNotification: _handleProjectScroll,
-            child: RefreshIndicator(
-              onRefresh: () => ref
-                  .read(projectControllerProvider(selectedProject).notifier)
-                  .loadForView(data.project, _viewIndex),
-              child: _buildProjectBody(data.project),
+      // Project branch - look up fresh from projectsControllerProvider
+      final projectsAsync = ref.watch(projectsControllerProvider);
+      return projectsAsync.when(
+        data: (projectsList) {
+          final project = _getSelectedProject(projectsList.projects);
+
+          if (project == null) {
+            // Project not found - schedule state reset and show all tasks
+            WidgetsBinding.instance.addPostFrameCallback((_) {
+              if (mounted) setState(() => _selectedProjectId = null);
+            });
+            // Temporarily show loading while state resets
+            return const Scaffold(body: LoadingWidget());
+          }
+
+          final projectAsync = ref.watch(projectControllerProvider(project));
+          return projectAsync.when(
+            data: (data) => Scaffold(
+              appBar: _buildProjectAppBar(data.project, data.displayDoneTask),
+              body: NotificationListener<ScrollNotification>(
+                onNotification: _handleProjectScroll,
+                child: RefreshIndicator(
+                  onRefresh: () async {
+                    if (data.project.views.isEmpty) {
+                      ref
+                          .read(projectControllerProvider(data.project)
+                              .notifier)
+                          .reload();
+                      return;
+                    }
+                    final safeIndex =
+                        _viewIndex.clamp(0, data.project.views.length - 1);
+                    return ref
+                        .read(projectControllerProvider(data.project).notifier)
+                        .loadForView(data.project, safeIndex);
+                  },
+                  child: _buildProjectBody(data.project),
+                ),
+              ),
+              floatingActionButton: _buildProjectFab(data.project),
+              bottomNavigationBar: _buildBottomNavigation(data.project),
             ),
-          ),
-          floatingActionButton: _buildProjectFab(data.project),
-          bottomNavigationBar: _buildBottomNavigation(data.project),
-        ),
-        error: (err, _) => VikunjaErrorWidget(
-          error: err,
-          onRetry: () => ref
-              .read(projectControllerProvider(selectedProject).notifier)
-              .loadForView(selectedProject, _viewIndex),
-        ),
-        loading: () => const LoadingWidget(),
+            error: (err, _) => VikunjaErrorWidget(
+              error: err,
+              onRetry: () async {
+                if (project.views.isEmpty) {
+                  ref
+                      .read(projectControllerProvider(project).notifier)
+                      .reload();
+                  return;
+                }
+                final safeIndex =
+                    _viewIndex.clamp(0, project.views.length - 1);
+                return ref
+                    .read(projectControllerProvider(project).notifier)
+                    .loadForView(project, safeIndex);
+              },
+            ),
+            loading: () => const LoadingWidget(),
+          );
+        },
+        error: (err, _) => VikunjaErrorWidget(error: err),
+        loading: () => const Scaffold(body: LoadingWidget()),
       );
     }
   }
@@ -106,7 +205,11 @@ class _TaskListPageState extends ConsumerState<TaskListPage> {
             icon: Icon(model.onlyDueDate
                 ? Icons.filter_list
                 : Icons.filter_list_alt),
-            onPressed: () => _onlyDueDateChanged(!model.onlyDueDate),
+            onPressed: () {
+              ref
+                  .read(taskPageControllerProvider.notifier)
+                  .setLandingPageOnlyDueDateTasks(!model.onlyDueDate);
+            },
           ),
         ),
       ],
@@ -153,7 +256,9 @@ class _TaskListPageState extends ConsumerState<TaskListPage> {
         child: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Text(label),
+            Flexible(
+              child: Text(label, overflow: TextOverflow.ellipsis),
+            ),
             const SizedBox(width: 4),
             const Icon(Icons.arrow_drop_down, size: 18),
           ],
@@ -171,17 +276,12 @@ class _TaskListPageState extends ConsumerState<TaskListPage> {
       context: context,
       isScrollControlled: true,
       builder: (_) => _ProjectPickerSheet(
-        currentProject: _selectedProject,
-        onSelected: (project) {
+        currentProjectId: _selectedProjectId,
+        onSelected: (projectId) {
           setState(() {
-            _selectedProject = project;
+            _selectedProjectId = projectId;
             _viewIndex = 0;
           });
-          if (project != null) {
-            ref
-                .read(projectControllerProvider(project).notifier)
-                .loadForView(project, 0);
-          }
         },
       ),
     );
@@ -197,13 +297,14 @@ class _TaskListPageState extends ConsumerState<TaskListPage> {
     }
 
     final groupedTasks = _groupTasks(model.tasks);
+    final l10n = AppLocalizations.of(context);
     final slivers = <Widget>[];
 
     for (final section in _TaskSection.values) {
       final tasks = groupedTasks[section] ?? [];
       if (tasks.isEmpty) continue;
 
-      final sectionTitle = _getSectionTitle(context, section);
+      final sectionTitle = _getSectionTitle(l10n, section);
       slivers.add(TaskSectionHeader(title: sectionTitle, count: tasks.length));
 
       slivers.add(
@@ -248,7 +349,9 @@ class _TaskListPageState extends ConsumerState<TaskListPage> {
     return switch (project.views[safeIndex].viewKind) {
       ViewKind.list => ProjectTaskList(project),
       ViewKind.kanban => KanbanWidget(project: project),
-      _ => Center(child: Text(AppLocalizations.of(context).notImplemented)),
+      ViewKind.gantt || ViewKind.table => Center(
+        child: Text(AppLocalizations.of(context).notImplemented),
+      ),
     };
   }
 
@@ -268,26 +371,33 @@ class _TaskListPageState extends ConsumerState<TaskListPage> {
                 tooltip: view.title,
               ))
           .toList(),
-      currentIndex: _viewIndex,
+      currentIndex: _viewIndex.clamp(0, project.views.length - 1),
       onTap: _onViewTapped,
     );
   }
 
   void _onViewTapped(int index) {
-    final project = _selectedProject;
-    if (project == null) return;
+    final projectsData = ref.read(projectsControllerProvider);
+    if (projectsData.value == null) return;
 
-    setState(() => _viewIndex = index);
+    final project = _getSelectedProject(projectsData.value!.projects);
+    if (project == null) {
+      setState(() => _selectedProjectId = null);
+      return;
+    }
+
+    final safeIndex = index.clamp(0, project.views.length - 1);
+    setState(() => _viewIndex = safeIndex);
     ref
         .read(projectControllerProvider(project).notifier)
-        .loadForView(project, index);
+        .loadForView(project, safeIndex);
   }
 
   // ============================================================================
   // FABs
   // ============================================================================
 
-  Widget? _buildAllTasksFab(TaskPageModel model) {
+  Widget _buildAllTasksFab(TaskPageModel model) {
     return FloatingActionButton(
       onPressed: () {
         if (model.defaultProjectId == 0) {
@@ -304,9 +414,10 @@ class _TaskListPageState extends ConsumerState<TaskListPage> {
   }
 
   Widget? _buildProjectFab(Project project) {
-    if (project.views.isEmpty ||
-        project.views[_viewIndex].viewKind == ViewKind.kanban ||
-        project.id < 0) {
+    if (project.views.isEmpty || project.id < 0) return null;
+
+    final safeIndex = _viewIndex.clamp(0, project.views.length - 1);
+    if (project.views[safeIndex].viewKind == ViewKind.kanban) {
       return null;
     }
 
@@ -321,19 +432,25 @@ class _TaskListPageState extends ConsumerState<TaskListPage> {
   // ============================================================================
 
   bool _handleAllTasksScroll(ScrollNotification scrollInfo) {
-    if (scrollInfo.metrics.pixels == scrollInfo.metrics.maxScrollExtent) {
+    if (scrollInfo is ScrollUpdateNotification &&
+        scrollInfo.metrics.pixels == scrollInfo.metrics.maxScrollExtent) {
       ref.read(taskPageControllerProvider.notifier).loadNextPage();
     }
     return false;
   }
 
   bool _handleProjectScroll(ScrollNotification scrollInfo) {
-    if (scrollInfo.metrics.pixels == scrollInfo.metrics.maxScrollExtent) {
-      final project = _selectedProject;
-      if (project != null) {
-        ref
-            .read(projectControllerProvider(project).notifier)
-            .loadNextPage();
+    if (scrollInfo is ScrollUpdateNotification &&
+        scrollInfo.metrics.axis == Axis.vertical &&
+        scrollInfo.metrics.pixels == scrollInfo.metrics.maxScrollExtent) {
+      final projectsData = ref.read(projectsControllerProvider);
+      if (projectsData.value != null) {
+        final project = _getSelectedProject(projectsData.value!.projects);
+        if (project != null) {
+          ref
+              .read(projectControllerProvider(project).notifier)
+              .loadNextPage();
+        }
       }
     }
     return false;
@@ -348,12 +465,20 @@ class _TaskListPageState extends ConsumerState<TaskListPage> {
       key: Key(task.id.toString()),
       task: task,
       onTap: () async {
-        final result = await _openTaskDetail(context, task);
+        final result = await Navigator.push<Task?>(
+          context,
+          MaterialPageRoute(builder: (_) => TaskDetailPage(task: task)),
+        );
         if (result != null && result.done) {
           ref.read(taskPageControllerProvider.notifier).reload();
         }
       },
-      onEdit: () => _onEdit(context, task),
+      onEdit: () {
+        Navigator.push<Task?>(
+          context,
+          MaterialPageRoute(builder: (_) => TaskEditPage(task: task)),
+        );
+      },
       onCheckedChanged: (value) async {
         var success = await ref
             .read(taskPageControllerProvider.notifier)
@@ -361,26 +486,11 @@ class _TaskListPageState extends ConsumerState<TaskListPage> {
         if (!success && context.mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
-              content:
-                  Text(AppLocalizations.of(context).taskMarkDoneError),
+              content: Text(AppLocalizations.of(context).taskMarkDoneError),
             ),
           );
         }
       },
-    );
-  }
-
-  Future<Task?> _openTaskDetail(BuildContext context, Task task) {
-    return Navigator.push<Task?>(
-      context,
-      MaterialPageRoute(builder: (_) => TaskDetailPage(task: task)),
-    );
-  }
-
-  void _onEdit(BuildContext context, Task task) {
-    Navigator.push<Task?>(
-      context,
-      MaterialPageRoute(builder: (buildContext) => TaskEditPage(task: task)),
     );
   }
 
@@ -432,13 +542,6 @@ class _TaskListPageState extends ConsumerState<TaskListPage> {
     }
   }
 
-  void _onlyDueDateChanged(bool newValue) {
-    Navigator.pop(context);
-    ref
-        .read(taskPageControllerProvider.notifier)
-        .setLandingPageOnlyDueDateTasks(newValue);
-  }
-
   // ============================================================================
   // Project Task Operations
   // ============================================================================
@@ -482,61 +585,6 @@ class _TaskListPageState extends ConsumerState<TaskListPage> {
           : AppLocalizations.of(context).taskAddError),
     ));
   }
-
-  // ============================================================================
-  // Task Grouping Helpers
-  // ============================================================================
-
-  Map<_TaskSection, List<Task>> _groupTasks(List<Task> tasks) {
-    final now = DateTime.now();
-    final todayStart = DateTime(now.year, now.month, now.day);
-    final tomorrowStart = todayStart.add(const Duration(days: 1));
-    final dayAfterTomorrowStart = todayStart.add(const Duration(days: 2));
-    final weekEnd = todayStart.add(const Duration(days: 7));
-
-    final grouped = <_TaskSection, List<Task>>{};
-    for (final section in _TaskSection.values) {
-      grouped[section] = [];
-    }
-
-    for (final task in tasks) {
-      if (!task.hasDueDate) {
-        grouped[_TaskSection.noDueDate]!.add(task);
-      } else {
-        final dueDate = DateTime(
-          task.dueDate!.year,
-          task.dueDate!.month,
-          task.dueDate!.day,
-        );
-        if (dueDate.isBefore(todayStart)) {
-          grouped[_TaskSection.overdue]!.add(task);
-        } else if (dueDate == todayStart) {
-          grouped[_TaskSection.today]!.add(task);
-        } else if (dueDate == tomorrowStart) {
-          grouped[_TaskSection.tomorrow]!.add(task);
-        } else if (!dueDate.isBefore(dayAfterTomorrowStart) &&
-            dueDate.isBefore(weekEnd)) {
-          grouped[_TaskSection.thisWeek]!.add(task);
-        } else {
-          grouped[_TaskSection.later]!.add(task);
-        }
-      }
-    }
-
-    return grouped;
-  }
-
-  String _getSectionTitle(BuildContext context, _TaskSection section) {
-    final l10n = AppLocalizations.of(context);
-    return switch (section) {
-      _TaskSection.overdue => l10n.overdue,
-      _TaskSection.today => l10n.today,
-      _TaskSection.tomorrow => l10n.tomorrow,
-      _TaskSection.thisWeek => l10n.thisWeek,
-      _TaskSection.later => l10n.later,
-      _TaskSection.noDueDate => l10n.noDueDate,
-    };
-  }
 }
 
 // ============================================================================
@@ -544,11 +592,11 @@ class _TaskListPageState extends ConsumerState<TaskListPage> {
 // ============================================================================
 
 class _ProjectPickerSheet extends ConsumerWidget {
-  final Project? currentProject;
-  final void Function(Project? project) onSelected;
+  final int? currentProjectId;
+  final void Function(int?) onSelected;
 
   const _ProjectPickerSheet({
-    required this.currentProject,
+    required this.currentProjectId,
     required this.onSelected,
   });
 
@@ -580,7 +628,7 @@ class _ProjectPickerSheet extends ConsumerWidget {
                 ),
               ),
             ),
-            // Title row
+            // Title
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
               child: Text(
@@ -589,19 +637,37 @@ class _ProjectPickerSheet extends ConsumerWidget {
               ),
             ),
             const Divider(height: 1),
-            // List
+            // "All Tasks" always visible
+            ListTile(
+              leading: const Icon(Icons.home_outlined),
+              title: Text(l10n.allTasks),
+              trailing: currentProjectId == null
+                  ? Icon(Icons.check,
+                      color: Theme.of(context).colorScheme.primary)
+                  : null,
+              selected: currentProjectId == null,
+              onTap: () {
+                Navigator.pop(context);
+                onSelected(null);
+              },
+            ),
+            const Divider(height: 1),
+            // Projects list
             Expanded(
               child: projectsAsync.when(
                 data: (model) => ListView(
                   controller: scrollController,
-                  children: [
-                    _buildProjectItem(context, null),
-                    ...model.projects
-                        .expand((p) => _flattenProject(context, p)),
-                  ],
+                  children: model.projects
+                      .expand((p) => _flattenProject(context, p, depth: 0))
+                      .toList(),
                 ),
-                loading: () => const LoadingWidget(),
-                error: (err, _) => VikunjaErrorWidget(error: err),
+                loading: () => const Center(child: LoadingWidget()),
+                error: (err, _) => Center(
+                  child: Padding(
+                    padding: const EdgeInsets.all(16),
+                    child: VikunjaErrorWidget(error: err),
+                  ),
+                ),
               ),
             ),
           ],
@@ -610,24 +676,35 @@ class _ProjectPickerSheet extends ConsumerWidget {
     );
   }
 
-  List<Widget> _flattenProject(BuildContext context, Project project) {
+  List<Widget> _flattenProject(
+    BuildContext context,
+    Project project, {
+    required int depth,
+  }) {
     return [
-      _buildProjectItem(context, project),
-      ...project.subprojects.expand((sub) => _flattenProject(context, sub)),
+      _buildProjectItem(context, project, depth: depth),
+      ...project.subprojects.expand(
+        (sub) => _flattenProject(context, sub, depth: depth + 1),
+      ),
     ];
   }
 
-  Widget _buildProjectItem(BuildContext context, Project? project) {
-    final l10n = AppLocalizations.of(context);
-    final isSelected = project?.id == currentProject?.id;
+  Widget _buildProjectItem(
+    BuildContext context,
+    Project project, {
+    required int depth,
+  }) {
+    final isSelected = project.id == currentProjectId;
 
     return ListTile(
-      leading: project == null
-          ? const Icon(Icons.home_outlined)
-          : (project.views.isNotEmpty
-              ? project.views.first.icon
-              : const Icon(Icons.folder_outlined)),
-      title: Text(project?.title ?? l10n.allTasks),
+      contentPadding: EdgeInsets.only(
+        left: 16 + (depth * 16.0),
+        right: 16,
+      ),
+      leading: project.views.isNotEmpty
+          ? project.views.first.icon
+          : const Icon(Icons.folder_outlined),
+      title: Text(project.title, overflow: TextOverflow.ellipsis),
       trailing: isSelected
           ? Icon(Icons.check,
               color: Theme.of(context).colorScheme.primary)
@@ -635,7 +712,7 @@ class _ProjectPickerSheet extends ConsumerWidget {
       selected: isSelected,
       onTap: () {
         Navigator.pop(context);
-        onSelected(project);
+        onSelected(project.id);
       },
     );
   }
