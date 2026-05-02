@@ -106,9 +106,6 @@ class _TaskDetailPageState extends ConsumerState<TaskDetailPage> {
             IconButton(
               icon: Icon(
                 _task.done ? Icons.check_circle : Icons.check_circle_outline,
-                color: _task.done
-                    ? theme.colorScheme.primary
-                    : theme.colorScheme.onSurface,
               ),
               onPressed: _toggleDone,
               tooltip: l10n.done,
