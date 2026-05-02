@@ -19,3 +19,6 @@ String durationToHumanReadable(Duration dur) {
   if (dur.isNegative) return "$durString ago";
   return "in $durString";
 }
+
+String stripHtml(String html) =>
+    html.replaceAll(RegExp(r'<[^>]*>'), '').replaceAll('&nbsp;', ' ').trim();

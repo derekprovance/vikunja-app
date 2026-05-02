@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_spinkit/flutter_spinkit.dart';
 import 'package:vikunja_app/core/di/network_provider.dart';
 import 'package:vikunja_app/core/theming/app_colors.dart';
+import 'package:vikunja_app/core/utils/misc.dart';
 import 'package:vikunja_app/domain/entities/project.dart';
 import 'package:vikunja_app/l10n/gen/app_localizations.dart';
 import 'package:vikunja_app/presentation/manager/projects_controller.dart';
@@ -80,6 +81,7 @@ class ProjectListPage extends ConsumerWidget {
     final colorScheme = Theme.of(context).colorScheme;
     final appColors = Theme.of(context).extension<AppColors>();
     final starColor = appColors?.success ?? colorScheme.tertiary;
+    final plainDescription = stripHtml(project.description);
 
     return Card(
       margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
@@ -91,9 +93,9 @@ class ProjectListPage extends ConsumerWidget {
             ListTile(
               leading: _buildLeadingIcon(project),
               title: Text(project.title),
-              subtitle: project.description.isNotEmpty
+              subtitle: plainDescription.isNotEmpty
                   ? Text(
-                      project.description,
+                      plainDescription,
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                       style: Theme.of(context)
