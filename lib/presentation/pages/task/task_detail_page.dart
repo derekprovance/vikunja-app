@@ -102,6 +102,16 @@ class _TaskDetailPageState extends ConsumerState<TaskDetailPage> {
                 ? const TextStyle(decoration: TextDecoration.lineThrough)
                 : null,
           ),
+          actions: [
+            IconButton(
+              icon: Icon(
+                _task.done ? Icons.check_circle : Icons.check_circle_outline,
+                color: _task.done ? theme.colorScheme.primary : null,
+              ),
+              onPressed: _isTogglingDone ? null : _toggleDone,
+              tooltip: l10n.done,
+            ),
+          ],
         ),
         body: Stack(
           children: [
