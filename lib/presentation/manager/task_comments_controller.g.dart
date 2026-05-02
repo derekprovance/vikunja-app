@@ -6,174 +6,98 @@ part of 'task_comments_controller.dart';
 // RiverpodGenerator
 // **************************************************************************
 
-String _$taskCommentsControllerHash() =>
-    r'e5127e8da1ffb404a33031d1026ce9626a7047e6';
+// GENERATED CODE - DO NOT MODIFY BY HAND
+// ignore_for_file: type=lint, type=warning
 
-/// Copied from Dart SDK
-class _SystemHash {
-  _SystemHash._();
-
-  static int combine(int hash, int value) {
-    // ignore: parameter_assignments
-    hash = 0x1fffffff & (hash + value);
-    // ignore: parameter_assignments
-    hash = 0x1fffffff & (hash + ((0x0007ffff & hash) << 10));
-    return hash ^ (hash >> 6);
-  }
-
-  static int finish(int hash) {
-    // ignore: parameter_assignments
-    hash = 0x1fffffff & (hash + ((0x03ffffff & hash) << 3));
-    // ignore: parameter_assignments
-    hash = hash ^ (hash >> 11);
-    return 0x1fffffff & (hash + ((0x00003fff & hash) << 15));
-  }
-}
-
-abstract class _$TaskCommentsController
-    extends BuildlessAutoDisposeAsyncNotifier<List<TaskComment>> {
-  late final int taskId;
-
-  FutureOr<List<TaskComment>> build(int taskId);
-}
-
-/// See also [TaskCommentsController].
 @ProviderFor(TaskCommentsController)
-const taskCommentsControllerProvider = TaskCommentsControllerFamily();
+final taskCommentsControllerProvider = TaskCommentsControllerFamily._();
 
-/// See also [TaskCommentsController].
-class TaskCommentsControllerFamily
-    extends Family<AsyncValue<List<TaskComment>>> {
-  /// See also [TaskCommentsController].
-  const TaskCommentsControllerFamily();
+final class TaskCommentsControllerProvider
+    extends $AsyncNotifierProvider<TaskCommentsController, List<TaskComment>> {
+  TaskCommentsControllerProvider._({
+    required TaskCommentsControllerFamily super.from,
+    required int super.argument,
+  }) : super(
+         retry: null,
+         name: r'taskCommentsControllerProvider',
+         isAutoDispose: true,
+         dependencies: null,
+         $allTransitiveDependencies: null,
+       );
 
-  /// See also [TaskCommentsController].
-  TaskCommentsControllerProvider call(int taskId) {
-    return TaskCommentsControllerProvider(taskId);
+  @override
+  String debugGetCreateSourceHash() => _$taskCommentsControllerHash();
+
+  @override
+  String toString() {
+    return r'taskCommentsControllerProvider'
+        ''
+        '($argument)';
   }
 
+  @$internal
   @override
-  TaskCommentsControllerProvider getProviderOverride(
-    covariant TaskCommentsControllerProvider provider,
-  ) {
-    return call(provider.taskId);
-  }
-
-  static const Iterable<ProviderOrFamily>? _dependencies = null;
-
-  @override
-  Iterable<ProviderOrFamily>? get dependencies => _dependencies;
-
-  static const Iterable<ProviderOrFamily>? _allTransitiveDependencies = null;
-
-  @override
-  Iterable<ProviderOrFamily>? get allTransitiveDependencies =>
-      _allTransitiveDependencies;
-
-  @override
-  String? get name => r'taskCommentsControllerProvider';
-}
-
-/// See also [TaskCommentsController].
-class TaskCommentsControllerProvider
-    extends
-        AutoDisposeAsyncNotifierProviderImpl<
-          TaskCommentsController,
-          List<TaskComment>
-        > {
-  /// See also [TaskCommentsController].
-  TaskCommentsControllerProvider(int taskId)
-    : this._internal(
-        () => TaskCommentsController()..taskId = taskId,
-        from: taskCommentsControllerProvider,
-        name: r'taskCommentsControllerProvider',
-        debugGetCreateSourceHash: const bool.fromEnvironment('dart.vm.product')
-            ? null
-            : _$taskCommentsControllerHash,
-        dependencies: TaskCommentsControllerFamily._dependencies,
-        allTransitiveDependencies:
-            TaskCommentsControllerFamily._allTransitiveDependencies,
-        taskId: taskId,
-      );
-
-  TaskCommentsControllerProvider._internal(
-    super._createNotifier, {
-    required super.name,
-    required super.dependencies,
-    required super.allTransitiveDependencies,
-    required super.debugGetCreateSourceHash,
-    required super.from,
-    required this.taskId,
-  }) : super.internal();
-
-  final int taskId;
-
-  @override
-  FutureOr<List<TaskComment>> runNotifierBuild(
-    covariant TaskCommentsController notifier,
-  ) {
-    return notifier.build(taskId);
-  }
-
-  @override
-  Override overrideWith(TaskCommentsController Function() create) {
-    return ProviderOverride(
-      origin: this,
-      override: TaskCommentsControllerProvider._internal(
-        () => create()..taskId = taskId,
-        from: from,
-        name: null,
-        dependencies: null,
-        allTransitiveDependencies: null,
-        debugGetCreateSourceHash: null,
-        taskId: taskId,
-      ),
-    );
-  }
-
-  @override
-  AutoDisposeAsyncNotifierProviderElement<
-    TaskCommentsController,
-    List<TaskComment>
-  >
-  createElement() {
-    return _TaskCommentsControllerProviderElement(this);
-  }
+  TaskCommentsController create() => TaskCommentsController();
 
   @override
   bool operator ==(Object other) {
-    return other is TaskCommentsControllerProvider && other.taskId == taskId;
+    return other is TaskCommentsControllerProvider &&
+        other.argument == argument;
   }
 
   @override
   int get hashCode {
-    var hash = _SystemHash.combine(0, runtimeType.hashCode);
-    hash = _SystemHash.combine(hash, taskId.hashCode);
-
-    return _SystemHash.finish(hash);
+    return argument.hashCode;
   }
 }
 
-@Deprecated('Will be removed in 3.0. Use Ref instead')
-// ignore: unused_element
-mixin TaskCommentsControllerRef
-    on AutoDisposeAsyncNotifierProviderRef<List<TaskComment>> {
-  /// The parameter `taskId` of this provider.
-  int get taskId;
-}
+String _$taskCommentsControllerHash() =>
+    r'e5127e8da1ffb404a33031d1026ce9626a7047e6';
 
-class _TaskCommentsControllerProviderElement
-    extends
-        AutoDisposeAsyncNotifierProviderElement<
+final class TaskCommentsControllerFamily extends $Family
+    with
+        $ClassFamilyOverride<
           TaskCommentsController,
-          List<TaskComment>
-        >
-    with TaskCommentsControllerRef {
-  _TaskCommentsControllerProviderElement(super.provider);
+          AsyncValue<List<TaskComment>>,
+          List<TaskComment>,
+          FutureOr<List<TaskComment>>,
+          int
+        > {
+  TaskCommentsControllerFamily._()
+    : super(
+        retry: null,
+        name: r'taskCommentsControllerProvider',
+        dependencies: null,
+        $allTransitiveDependencies: null,
+        isAutoDispose: true,
+      );
+
+  TaskCommentsControllerProvider call(int taskId) =>
+      TaskCommentsControllerProvider._(argument: taskId, from: this);
 
   @override
-  int get taskId => (origin as TaskCommentsControllerProvider).taskId;
+  String toString() => r'taskCommentsControllerProvider';
 }
 
-// ignore_for_file: type=lint
-// ignore_for_file: subtype_of_sealed_class, invalid_use_of_internal_member, invalid_use_of_visible_for_testing_member, deprecated_member_use_from_same_package
+abstract class _$TaskCommentsController
+    extends $AsyncNotifier<List<TaskComment>> {
+  late final _$args = ref.$arg as int;
+  int get taskId => _$args;
+
+  FutureOr<List<TaskComment>> build(int taskId);
+  @$mustCallSuper
+  @override
+  void runBuild() {
+    final ref =
+        this.ref as $Ref<AsyncValue<List<TaskComment>>, List<TaskComment>>;
+    final element =
+        ref.element
+            as $ClassProviderElement<
+              AnyNotifier<AsyncValue<List<TaskComment>>, List<TaskComment>>,
+              AsyncValue<List<TaskComment>>,
+              Object?,
+              Object?
+            >;
+    element.handleCreate(ref, () => build(_$args));
+  }
+}

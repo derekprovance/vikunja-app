@@ -6,169 +6,95 @@ part of 'project_controller.dart';
 // RiverpodGenerator
 // **************************************************************************
 
-String _$projectControllerHash() => r'0772e046fe4e4e2b97fc2140dd462897f14c9e96';
+// GENERATED CODE - DO NOT MODIFY BY HAND
+// ignore_for_file: type=lint, type=warning
 
-/// Copied from Dart SDK
-class _SystemHash {
-  _SystemHash._();
-
-  static int combine(int hash, int value) {
-    // ignore: parameter_assignments
-    hash = 0x1fffffff & (hash + value);
-    // ignore: parameter_assignments
-    hash = 0x1fffffff & (hash + ((0x0007ffff & hash) << 10));
-    return hash ^ (hash >> 6);
-  }
-
-  static int finish(int hash) {
-    // ignore: parameter_assignments
-    hash = 0x1fffffff & (hash + ((0x03ffffff & hash) << 3));
-    // ignore: parameter_assignments
-    hash = hash ^ (hash >> 11);
-    return 0x1fffffff & (hash + ((0x00003fff & hash) << 15));
-  }
-}
-
-abstract class _$ProjectController
-    extends BuildlessAutoDisposeAsyncNotifier<ProjectPageModel> {
-  late final Project project;
-
-  FutureOr<ProjectPageModel> build(Project project);
-}
-
-/// See also [ProjectController].
 @ProviderFor(ProjectController)
-const projectControllerProvider = ProjectControllerFamily();
+final projectControllerProvider = ProjectControllerFamily._();
 
-/// See also [ProjectController].
-class ProjectControllerFamily extends Family<AsyncValue<ProjectPageModel>> {
-  /// See also [ProjectController].
-  const ProjectControllerFamily();
+final class ProjectControllerProvider
+    extends $AsyncNotifierProvider<ProjectController, ProjectPageModel> {
+  ProjectControllerProvider._({
+    required ProjectControllerFamily super.from,
+    required Project super.argument,
+  }) : super(
+         retry: null,
+         name: r'projectControllerProvider',
+         isAutoDispose: true,
+         dependencies: null,
+         $allTransitiveDependencies: null,
+       );
 
-  /// See also [ProjectController].
-  ProjectControllerProvider call(Project project) {
-    return ProjectControllerProvider(project);
+  @override
+  String debugGetCreateSourceHash() => _$projectControllerHash();
+
+  @override
+  String toString() {
+    return r'projectControllerProvider'
+        ''
+        '($argument)';
   }
 
+  @$internal
   @override
-  ProjectControllerProvider getProviderOverride(
-    covariant ProjectControllerProvider provider,
-  ) {
-    return call(provider.project);
-  }
-
-  static const Iterable<ProviderOrFamily>? _dependencies = null;
-
-  @override
-  Iterable<ProviderOrFamily>? get dependencies => _dependencies;
-
-  static const Iterable<ProviderOrFamily>? _allTransitiveDependencies = null;
-
-  @override
-  Iterable<ProviderOrFamily>? get allTransitiveDependencies =>
-      _allTransitiveDependencies;
-
-  @override
-  String? get name => r'projectControllerProvider';
-}
-
-/// See also [ProjectController].
-class ProjectControllerProvider
-    extends
-        AutoDisposeAsyncNotifierProviderImpl<
-          ProjectController,
-          ProjectPageModel
-        > {
-  /// See also [ProjectController].
-  ProjectControllerProvider(Project project)
-    : this._internal(
-        () => ProjectController()..project = project,
-        from: projectControllerProvider,
-        name: r'projectControllerProvider',
-        debugGetCreateSourceHash: const bool.fromEnvironment('dart.vm.product')
-            ? null
-            : _$projectControllerHash,
-        dependencies: ProjectControllerFamily._dependencies,
-        allTransitiveDependencies:
-            ProjectControllerFamily._allTransitiveDependencies,
-        project: project,
-      );
-
-  ProjectControllerProvider._internal(
-    super._createNotifier, {
-    required super.name,
-    required super.dependencies,
-    required super.allTransitiveDependencies,
-    required super.debugGetCreateSourceHash,
-    required super.from,
-    required this.project,
-  }) : super.internal();
-
-  final Project project;
-
-  @override
-  FutureOr<ProjectPageModel> runNotifierBuild(
-    covariant ProjectController notifier,
-  ) {
-    return notifier.build(project);
-  }
-
-  @override
-  Override overrideWith(ProjectController Function() create) {
-    return ProviderOverride(
-      origin: this,
-      override: ProjectControllerProvider._internal(
-        () => create()..project = project,
-        from: from,
-        name: null,
-        dependencies: null,
-        allTransitiveDependencies: null,
-        debugGetCreateSourceHash: null,
-        project: project,
-      ),
-    );
-  }
-
-  @override
-  AutoDisposeAsyncNotifierProviderElement<ProjectController, ProjectPageModel>
-  createElement() {
-    return _ProjectControllerProviderElement(this);
-  }
+  ProjectController create() => ProjectController();
 
   @override
   bool operator ==(Object other) {
-    return other is ProjectControllerProvider && other.project == project;
+    return other is ProjectControllerProvider && other.argument == argument;
   }
 
   @override
   int get hashCode {
-    var hash = _SystemHash.combine(0, runtimeType.hashCode);
-    hash = _SystemHash.combine(hash, project.hashCode);
-
-    return _SystemHash.finish(hash);
+    return argument.hashCode;
   }
 }
 
-@Deprecated('Will be removed in 3.0. Use Ref instead')
-// ignore: unused_element
-mixin ProjectControllerRef
-    on AutoDisposeAsyncNotifierProviderRef<ProjectPageModel> {
-  /// The parameter `project` of this provider.
-  Project get project;
-}
+String _$projectControllerHash() => r'2ae4088dfc5ed100c9509c2b6955c51f6f921ed9';
 
-class _ProjectControllerProviderElement
-    extends
-        AutoDisposeAsyncNotifierProviderElement<
+final class ProjectControllerFamily extends $Family
+    with
+        $ClassFamilyOverride<
           ProjectController,
-          ProjectPageModel
-        >
-    with ProjectControllerRef {
-  _ProjectControllerProviderElement(super.provider);
+          AsyncValue<ProjectPageModel>,
+          ProjectPageModel,
+          FutureOr<ProjectPageModel>,
+          Project
+        > {
+  ProjectControllerFamily._()
+    : super(
+        retry: null,
+        name: r'projectControllerProvider',
+        dependencies: null,
+        $allTransitiveDependencies: null,
+        isAutoDispose: true,
+      );
+
+  ProjectControllerProvider call(Project project) =>
+      ProjectControllerProvider._(argument: project, from: this);
 
   @override
-  Project get project => (origin as ProjectControllerProvider).project;
+  String toString() => r'projectControllerProvider';
 }
 
-// ignore_for_file: type=lint
-// ignore_for_file: subtype_of_sealed_class, invalid_use_of_internal_member, invalid_use_of_visible_for_testing_member, deprecated_member_use_from_same_package
+abstract class _$ProjectController extends $AsyncNotifier<ProjectPageModel> {
+  late final _$args = ref.$arg as Project;
+  Project get project => _$args;
+
+  FutureOr<ProjectPageModel> build(Project project);
+  @$mustCallSuper
+  @override
+  void runBuild() {
+    final ref =
+        this.ref as $Ref<AsyncValue<ProjectPageModel>, ProjectPageModel>;
+    final element =
+        ref.element
+            as $ClassProviderElement<
+              AnyNotifier<AsyncValue<ProjectPageModel>, ProjectPageModel>,
+              AsyncValue<ProjectPageModel>,
+              Object?,
+              Object?
+            >;
+    element.handleCreate(ref, () => build(_$args));
+  }
+}

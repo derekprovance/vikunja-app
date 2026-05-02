@@ -17,9 +17,7 @@ import 'package:vikunja_app/presentation/manager/widget_controller.dart';
 const _actionDonePortName = 'action_done_port_name';
 
 @pragma('vm:entry-point')
-Future<void> notificationTapBackground(
-  NotificationResponse notificationResponse,
-) async {
+Future<void> notificationTapBackground(NotificationResponse notificationResponse) async {
   if (notificationResponse.actionId == "action_done") {
     var id = notificationResponse.id;
 
@@ -54,9 +52,7 @@ Future<void> markAsDone(int id) async {
     await updateWidget();
 
     //Call app if opened to update view
-    final SendPort? sendPort = IsolateNameServer.lookupPortByName(
-      _actionDonePortName,
-    );
+    final SendPort? sendPort = IsolateNameServer.lookupPortByName(_actionDonePortName);
 
     if (sendPort != null) {
       sendPort.send(task.id);
@@ -68,8 +64,7 @@ class NotificationHandler {
   final ReceivePort _receivePort = ReceivePort();
   final List<Function()> _taskChangedListener = List.empty(growable: true);
 
-  FlutterLocalNotificationsPlugin get notificationsPlugin =>
-      FlutterLocalNotificationsPlugin();
+  FlutterLocalNotificationsPlugin get notificationsPlugin => FlutterLocalNotificationsPlugin();
 
   var androidSpecificsDueDate = AndroidNotificationDetails(
     "Vikunja1",
@@ -77,9 +72,7 @@ class NotificationHandler {
     channelDescription: "description",
     icon: 'vikunja_notification_logo',
     importance: Importance.high,
-    actions: <AndroidNotificationAction>[
-      AndroidNotificationAction('action_dcd one', 'Done'),
-    ],
+    actions: <AndroidNotificationAction>[AndroidNotificationAction('action_dcd one', 'Done')],
   );
   var androidSpecificsReminders = AndroidNotificationDetails(
     "Vikunja2",
@@ -87,9 +80,7 @@ class NotificationHandler {
     channelDescription: "description",
     icon: 'vikunja_notification_logo',
     importance: Importance.high,
-    actions: <AndroidNotificationAction>[
-      AndroidNotificationAction('action_done', 'Done'),
-    ],
+    actions: <AndroidNotificationAction>[AndroidNotificationAction('action_done', 'Done')],
   );
   late DarwinNotificationDetails iOSSpecifics;
   late NotificationDetails platformChannelSpecificsDueDate;
@@ -98,9 +89,7 @@ class NotificationHandler {
   NotificationHandler();
 
   Future<void> initNotifications() async {
-    iOSSpecifics = DarwinNotificationDetails(
-      categoryIdentifier: 'doneCategory',
-    );
+    iOSSpecifics = DarwinNotificationDetails(categoryIdentifier: 'doneCategory');
     platformChannelSpecificsDueDate = NotificationDetails(
       android: androidSpecificsDueDate,
       iOS: iOSSpecifics,
@@ -117,9 +106,7 @@ class NotificationHandler {
   }
 
   Future<void> _initNotifications() async {
-    var initializationSettingsAndroid = AndroidInitializationSettings(
-      'vikunja_logo',
-    );
+    var initializationSettingsAndroid = AndroidInitializationSettings('vikunja_logo');
     var initializationSettingsIOS = DarwinInitializationSettings(
       requestAlertPermission: false,
       requestBadgePermission: false,
@@ -147,10 +134,7 @@ class NotificationHandler {
   void initBackgroundCommunication() {
     IsolateNameServer.removePortNameMapping(_actionDonePortName);
 
-    final ok = IsolateNameServer.registerPortWithName(
-      _receivePort.sendPort,
-      _actionDonePortName,
-    );
+    final ok = IsolateNameServer.registerPortWithName(_receivePort.sendPort, _actionDonePortName);
     if (!ok) {
       developer.log('Failed to register $_actionDonePortName');
     }
@@ -171,13 +155,9 @@ class NotificationHandler {
     String currentTimeZone,
     NotificationDetails platformChannelSpecifics,
   ) async {
-    tz.TZDateTime time = tz.TZDateTime.from(
-      scheduledTime,
-      tz.getLocation(currentTimeZone),
-    );
+    tz.TZDateTime time = tz.TZDateTime.from(scheduledTime, tz.getLocation(currentTimeZone));
 
-    if (time.difference(tz.TZDateTime.now(tz.getLocation(currentTimeZone))) <
-        Duration.zero) {
+    if (time.difference(tz.TZDateTime.now(tz.getLocation(currentTimeZone))) < Duration.zero) {
       return;
     }
 
@@ -205,9 +185,7 @@ class NotificationHandler {
 
   void requestIOSPermissions() {
     notificationsPlugin
-        .resolvePlatformSpecificImplementation<
-          IOSFlutterLocalNotificationsPlugin
-        >()
+        .resolvePlatformSpecificImplementation<IOSFlutterLocalNotificationsPlugin>()
         ?.requestPermissions(alert: true, badge: true, sound: true);
   }
 
@@ -223,6 +201,7 @@ class NotificationHandler {
       await notificationsPlugin.cancelAll();
       for (final task in taskResponse.toSuccess().body) {
         if (task.done) continue;
+        final localTimeZone = (await FlutterTimezone.getLocalTimezone()).identifier;
         for (final reminder in task.reminderDates) {
           await scheduleNotification(
             (reminder.reminder.millisecondsSinceEpoch / 1000).floor(),
@@ -230,7 +209,7 @@ class NotificationHandler {
             "This is your reminder for '${task.title}'",
             notificationsPlugin,
             reminder.reminder,
-            await FlutterTimezone.getLocalTimezone(),
+            localTimeZone,
             platformChannelSpecificsReminders,
           );
         }
@@ -241,7 +220,7 @@ class NotificationHandler {
             "The task '${task.title}' is due.",
             notificationsPlugin,
             task.dueDate!,
-            await FlutterTimezone.getLocalTimezone(),
+            localTimeZone,
             platformChannelSpecificsDueDate,
           );
         }

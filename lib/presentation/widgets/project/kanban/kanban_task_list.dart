@@ -76,9 +76,7 @@ class _TaskListState extends ConsumerState<TaskList> {
   }
 
   void _autoScrollStep() {
-    if (!_dragActive ||
-        _lastGlobalDragPos == null ||
-        !_scrollController.hasClients) {
+    if (!_dragActive || _lastGlobalDragPos == null || !_scrollController.hasClients) {
       return;
     }
 
@@ -100,10 +98,7 @@ class _TaskListState extends ConsumerState<TaskList> {
       final t = (1 - (local.dy / _edgePx)).clamp(0.0, 1.0);
       dy = -_maxStep * t;
     } else if (local.dy >= size.height - _edgePx) {
-      final t = ((local.dy - (size.height - _edgePx)) / _edgePx).clamp(
-        0.0,
-        1.0,
-      );
+      final t = ((local.dy - (size.height - _edgePx)) / _edgePx).clamp(0.0, 1.0);
       dy = _maxStep * t;
     }
 
@@ -129,8 +124,11 @@ class _TaskListState extends ConsumerState<TaskList> {
   Widget build(BuildContext context) {
     final tasks = widget.bucket.tasks;
     final projectState = ref.watch(projectControllerProvider(widget.project));
-    final isLoadingNextPage =
-        projectState.valueOrNull?.isLoadingNextPage ?? false;
+    final isLoadingNextPage = projectState.when(
+      data: (data) => data.isLoadingNextPage,
+      loading: () => false,
+      error: (error, stack) => false,
+    );
 
     return Scrollbar(
       controller: _scrollController,
@@ -138,11 +136,8 @@ class _TaskListState extends ConsumerState<TaskList> {
         key: _listKey,
         child: NotificationListener<ScrollNotification>(
           onNotification: (ScrollNotification scrollInfo) {
-            if (scrollInfo.metrics.pixels ==
-                scrollInfo.metrics.maxScrollExtent) {
-              ref
-                  .read(projectControllerProvider(widget.project).notifier)
-                  .loadNextPage();
+            if (scrollInfo.metrics.pixels == scrollInfo.metrics.maxScrollExtent) {
+              ref.read(projectControllerProvider(widget.project).notifier).loadNextPage();
             }
             return false;
           },
@@ -168,11 +163,7 @@ class _TaskListState extends ConsumerState<TaskList> {
               ),
               for (int i = 0; i < tasks.length; i++) ...[
                 LongPressDraggable<TaskDrag>(
-                  data: TaskDrag(
-                    taskId: tasks[i].id,
-                    fromBucketId: widget.bucket.id,
-                    fromIndex: i,
-                  ),
+                  data: TaskDrag(taskId: tasks[i].id, fromBucketId: widget.bucket.id, fromIndex: i),
                   feedback: TaskFeedback(title: tasks[i].title),
                   onDragStarted: () {
                     widget.onAnyDragStarted(); // horizontal
@@ -194,10 +185,7 @@ class _TaskListState extends ConsumerState<TaskList> {
                     _stopAutoScroll();
                     widget.onAnyDragEnded();
                   },
-                  childWhenDragging: Opacity(
-                    opacity: 0.3,
-                    child: TaskTile(task: tasks[i]),
-                  ),
+                  childWhenDragging: Opacity(opacity: 0.3, child: TaskTile(task: tasks[i])),
                   child: InkWell(
                     child: TaskTile(task: tasks[i]),
                     onTap: () {
@@ -224,10 +212,7 @@ class _TaskListState extends ConsumerState<TaskList> {
                 Padding(
                   padding: const EdgeInsets.symmetric(vertical: 16.0),
                   child: Center(
-                    child: SpinKitThreeBounce(
-                      color: Theme.of(context).primaryColor,
-                      size: 16,
-                    ),
+                    child: SpinKitThreeBounce(color: Theme.of(context).primaryColor, size: 16),
                   ),
                 ),
             ],

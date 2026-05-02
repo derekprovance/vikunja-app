@@ -6,21 +6,57 @@ part of 'notification_provider.dart';
 // RiverpodGenerator
 // **************************************************************************
 
+// GENERATED CODE - DO NOT MODIFY BY HAND
+// ignore_for_file: type=lint, type=warning
+
+@ProviderFor(Notification)
+final notificationProvider = NotificationProvider._();
+
+final class NotificationProvider
+    extends $NotifierProvider<Notification, NotificationHandler?> {
+  NotificationProvider._()
+    : super(
+        from: null,
+        argument: null,
+        retry: null,
+        name: r'notificationProvider',
+        isAutoDispose: false,
+        dependencies: null,
+        $allTransitiveDependencies: null,
+      );
+
+  @override
+  String debugGetCreateSourceHash() => _$notificationHash();
+
+  @$internal
+  @override
+  Notification create() => Notification();
+
+  /// {@macro riverpod.override_with_value}
+  Override overrideWithValue(NotificationHandler? value) {
+    return $ProviderOverride(
+      origin: this,
+      providerOverride: $SyncValueProvider<NotificationHandler?>(value),
+    );
+  }
+}
+
 String _$notificationHash() => r'c1522e6a834ddc454d0445cb95470f2214804684';
 
-/// See also [Notification].
-@ProviderFor(Notification)
-final notificationProvider =
-    NotifierProvider<Notification, NotificationHandler?>.internal(
-      Notification.new,
-      name: r'notificationProvider',
-      debugGetCreateSourceHash: const bool.fromEnvironment('dart.vm.product')
-          ? null
-          : _$notificationHash,
-      dependencies: null,
-      allTransitiveDependencies: null,
-    );
-
-typedef _$Notification = Notifier<NotificationHandler?>;
-// ignore_for_file: type=lint
-// ignore_for_file: subtype_of_sealed_class, invalid_use_of_internal_member, invalid_use_of_visible_for_testing_member, deprecated_member_use_from_same_package
+abstract class _$Notification extends $Notifier<NotificationHandler?> {
+  NotificationHandler? build();
+  @$mustCallSuper
+  @override
+  void runBuild() {
+    final ref = this.ref as $Ref<NotificationHandler?, NotificationHandler?>;
+    final element =
+        ref.element
+            as $ClassProviderElement<
+              AnyNotifier<NotificationHandler?, NotificationHandler?>,
+              NotificationHandler?,
+              Object?,
+              Object?
+            >;
+    element.handleCreate(ref, build);
+  }
+}

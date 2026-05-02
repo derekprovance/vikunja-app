@@ -14,7 +14,10 @@ import 'package:vikunja_app/presentation/pages/task/task_edit_page.dart';
 import 'package:vikunja_app/presentation/widgets/empty_view.dart';
 import 'package:vikunja_app/presentation/widgets/task/add_task_dialog.dart';
 import 'package:vikunja_app/presentation/widgets/task/task_list_item.dart';
+import 'package:vikunja_app/presentation/widgets/task/task_section_header.dart';
 import 'package:vikunja_app/presentation/widgets/task_bottom_sheet.dart';
+
+enum _TaskSection { overdue, today, tomorrow, thisWeek, later, noDueDate }
 
 class TaskListPage extends ConsumerWidget {
   const TaskListPage({super.key});
@@ -34,8 +37,7 @@ class TaskListPage extends ConsumerWidget {
             },
             child: NotificationListener<ScrollNotification>(
               onNotification: (ScrollNotification scrollInfo) {
-                if (scrollInfo.metrics.pixels ==
-                    scrollInfo.metrics.maxScrollExtent) {
+                if (scrollInfo.metrics.pixels == scrollInfo.metrics.maxScrollExtent) {
                   ref.read(taskPageControllerProvider.notifier).loadNextPage();
                 }
                 return false;
@@ -46,9 +48,9 @@ class TaskListPage extends ConsumerWidget {
           floatingActionButton: FloatingActionButton(
             onPressed: () {
               if (model.defaultProjectId == 0) {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(content: Text(l10n.selectDefaultProject)),
-                );
+                ScaffoldMessenger.of(
+                  context,
+                ).showSnackBar(SnackBar(content: Text(l10n.selectDefaultProject)));
               } else {
                 _addItemDialog(ref, context, model.defaultProjectId);
               }
@@ -57,10 +59,8 @@ class TaskListPage extends ConsumerWidget {
           ),
         );
       },
-      error: (err, _) => VikunjaErrorWidget(
-        error: err,
-        onRetry: () => ref.invalidate(taskPageControllerProvider),
-      ),
+      error: (err, _) =>
+          VikunjaErrorWidget(error: err, onRetry: () => ref.invalidate(taskPageControllerProvider)),
       loading: () => const LoadingWidget(),
     );
   }
@@ -68,60 +68,56 @@ class TaskListPage extends ConsumerWidget {
   Widget _buildList(WidgetRef ref, BuildContext context, TaskPageModel model) {
     if (model.tasks.isEmpty) {
       return EmptyView(Icons.list, AppLocalizations.of(context).noTasks);
-    } else {
-      final itemCount = model.tasks.length + (model.isLoadingNextPage ? 1 : 0);
-      return ListView.separated(
-        itemCount: itemCount,
-        separatorBuilder: (BuildContext context, int index) =>
-            const Divider(height: 8),
-        itemBuilder: (context, index) {
-          if (index == model.tasks.length) {
-            return Padding(
-              padding: const EdgeInsets.symmetric(vertical: 16.0),
-              child: Center(
-                child: SpinKitThreeBounce(
-                  color: Theme.of(context).primaryColor,
-                  size: 16,
-                ),
-              ),
-            );
-          }
-          return _createListItem(ref, context, model.tasks[index]);
-        },
+    }
+
+    final groupedTasks = _groupTasks(model.tasks);
+    final slivers = <Widget>[];
+
+    for (final section in _TaskSection.values) {
+      final tasks = groupedTasks[section] ?? [];
+      if (tasks.isEmpty) continue;
+
+      final sectionTitle = _getSectionTitle(context, section);
+      slivers.add(TaskSectionHeader(title: sectionTitle, count: tasks.length));
+
+      slivers.add(
+        SliverList(
+          delegate: SliverChildBuilderDelegate(
+            (ctx, i) => _createListItem(ref, ctx, tasks[i]),
+            childCount: tasks.length,
+          ),
+        ),
       );
     }
+
+    if (model.isLoadingNextPage) {
+      slivers.add(
+        SliverToBoxAdapter(
+          child: Padding(
+            padding: const EdgeInsets.symmetric(vertical: 16.0),
+            child: Center(
+              child: SpinKitThreeBounce(color: Theme.of(context).primaryColor, size: 16),
+            ),
+          ),
+        ),
+      );
+    }
+
+    return CustomScrollView(slivers: slivers);
   }
 
   AppBar _buildAppBar(WidgetRef ref, BuildContext context, bool onlyDueDate) {
     return AppBar(
-      title: Text("Vikunja"),
+      title: const Text("Vikunja"),
       actions: [
-        PopupMenuButton(
-          itemBuilder: (BuildContext context) {
-            return [
-              PopupMenuItem(
-                child: InkWell(
-                  onTap: () {
-                    _onlyDueDateChanged(ref, context, !onlyDueDate);
-                  },
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.end,
-                    children: [
-                      Text(
-                        AppLocalizations.of(context).onlyShowTasksWithDueDate,
-                      ),
-                      Checkbox(
-                        value: onlyDueDate,
-                        onChanged: (bool? value) {
-                          _onlyDueDateChanged(ref, context, !onlyDueDate);
-                        },
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-            ];
-          },
+        Tooltip(
+          message: AppLocalizations.of(context).onlyShowTasksWithDueDate,
+          child: IconButton(
+            icon: Icon(onlyDueDate ? Icons.filter_list : Icons.filter_list_alt),
+            onPressed: () {
+              _onlyDueDateChanged(ref, context, !onlyDueDate);
+            },
+          ),
         ),
       ],
     );
@@ -129,21 +125,14 @@ class TaskListPage extends ConsumerWidget {
 
   void _onlyDueDateChanged(WidgetRef ref, BuildContext context, bool newValue) {
     Navigator.pop(context);
-    ref
-        .read(taskPageControllerProvider.notifier)
-        .setLandingPageOnlyDueDateTasks(newValue);
+    ref.read(taskPageControllerProvider.notifier).setLandingPageOnlyDueDateTasks(newValue);
   }
 
-  void _addItemDialog(
-    WidgetRef ref,
-    BuildContext context,
-    int defaultProjectId,
-  ) {
+  void _addItemDialog(WidgetRef ref, BuildContext context, int defaultProjectId) {
     showDialog(
       context: context,
       builder: (_) => AddTaskDialog(
-        onAddTask: (title, dueDate) =>
-            _addTask(ref, title, dueDate, defaultProjectId),
+        onAddTask: (title, dueDate) => _addTask(ref, title, dueDate, defaultProjectId),
       ),
     );
   }
@@ -172,17 +161,13 @@ class TaskListPage extends ConsumerWidget {
 
     if (ref.context.mounted) {
       if (success) {
-        ScaffoldMessenger.of(ref.context).showSnackBar(
-          SnackBar(
-            content: Text(AppLocalizations.of(ref.context).taskAddedSuccess),
-          ),
-        );
+        ScaffoldMessenger.of(
+          ref.context,
+        ).showSnackBar(SnackBar(content: Text(AppLocalizations.of(ref.context).taskAddedSuccess)));
       } else {
-        ScaffoldMessenger.of(ref.context).showSnackBar(
-          SnackBar(
-            content: Text(AppLocalizations.of(ref.context).taskAddError),
-          ),
-        );
+        ScaffoldMessenger.of(
+          ref.context,
+        ).showSnackBar(SnackBar(content: Text(AppLocalizations.of(ref.context).taskAddError)));
       }
     }
   }
@@ -196,15 +181,11 @@ class TaskListPage extends ConsumerWidget {
       },
       onEdit: () => _onEdit(context, task),
       onCheckedChanged: (value) async {
-        var success = await ref
-            .read(taskPageControllerProvider.notifier)
-            .markAsDone(task);
+        var success = await ref.read(taskPageControllerProvider.notifier).markAsDone(task);
         if (!success && context.mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text(AppLocalizations.of(context).taskMarkDoneError),
-            ),
-          );
+          ScaffoldMessenger.of(
+            context,
+          ).showSnackBar(SnackBar(content: Text(AppLocalizations.of(context).taskMarkDoneError)));
         }
       },
     );
@@ -217,10 +198,7 @@ class TaskListPage extends ConsumerWidget {
         borderRadius: BorderRadius.vertical(top: Radius.circular(10.0)),
       ),
       builder: (BuildContext context) {
-        return TaskBottomSheet(
-          task: task,
-          onEdit: () => _onEdit(context, task),
-        );
+        return TaskBottomSheet(task: task, onEdit: () => _onEdit(context, task));
       },
     );
   }
@@ -230,5 +208,51 @@ class TaskListPage extends ConsumerWidget {
       context,
       MaterialPageRoute(builder: (buildContext) => TaskEditPage(task: task)),
     );
+  }
+
+  Map<_TaskSection, List<Task>> _groupTasks(List<Task> tasks) {
+    final now = DateTime.now();
+    final todayStart = DateTime(now.year, now.month, now.day);
+    final tomorrowStart = todayStart.add(const Duration(days: 1));
+    final dayAfterTomorrowStart = todayStart.add(const Duration(days: 2));
+    final weekEnd = todayStart.add(const Duration(days: 7));
+
+    final grouped = <_TaskSection, List<Task>>{};
+    for (final section in _TaskSection.values) {
+      grouped[section] = [];
+    }
+
+    for (final task in tasks) {
+      if (!task.hasDueDate) {
+        grouped[_TaskSection.noDueDate]!.add(task);
+      } else {
+        final dueDate = DateTime(task.dueDate!.year, task.dueDate!.month, task.dueDate!.day);
+        if (dueDate.isBefore(todayStart)) {
+          grouped[_TaskSection.overdue]!.add(task);
+        } else if (dueDate == todayStart) {
+          grouped[_TaskSection.today]!.add(task);
+        } else if (dueDate == tomorrowStart) {
+          grouped[_TaskSection.tomorrow]!.add(task);
+        } else if (!dueDate.isBefore(dayAfterTomorrowStart) && dueDate.isBefore(weekEnd)) {
+          grouped[_TaskSection.thisWeek]!.add(task);
+        } else {
+          grouped[_TaskSection.later]!.add(task);
+        }
+      }
+    }
+
+    return grouped;
+  }
+
+  String _getSectionTitle(BuildContext context, _TaskSection section) {
+    final l10n = AppLocalizations.of(context);
+    return switch (section) {
+      _TaskSection.overdue => l10n.overdue,
+      _TaskSection.today => l10n.today,
+      _TaskSection.tomorrow => l10n.tomorrow,
+      _TaskSection.thisWeek => l10n.thisWeek,
+      _TaskSection.later => l10n.later,
+      _TaskSection.noDueDate => l10n.noDueDate,
+    };
   }
 }
