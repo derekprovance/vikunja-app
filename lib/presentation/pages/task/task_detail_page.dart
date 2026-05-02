@@ -80,13 +80,21 @@ class _TaskDetailPageState extends ConsumerState<TaskDetailPage> {
             child: AnimatedDefaultTextStyle(
               duration: const Duration(milliseconds: 200),
               style: theme.textTheme.headlineSmall!.copyWith(
-                decoration: _task.done ? TextDecoration.lineThrough : TextDecoration.none,
-                decorationColor: theme.colorScheme.onSurface.withValues(alpha: 0.45),
+                decoration: _task.done
+                    ? TextDecoration.lineThrough
+                    : TextDecoration.none,
+                decorationColor: theme.colorScheme.onSurface.withValues(
+                  alpha: 0.45,
+                ),
                 color: _task.done
                     ? theme.colorScheme.onSurface.withValues(alpha: 0.45)
                     : theme.colorScheme.onSurface,
               ),
-              child: Text(_task.title),
+              child: Text(
+                _task.title,
+                maxLines: 3,
+                overflow: TextOverflow.ellipsis,
+              ),
             ),
           ),
           const SizedBox(width: 12),
@@ -95,22 +103,35 @@ class _TaskDetailPageState extends ConsumerState<TaskDetailPage> {
             child: InkWell(
               onTap: _isTogglingDone ? null : _toggleDone,
               borderRadius: BorderRadius.circular(22),
-              child: AnimatedContainer(
-                duration: const Duration(milliseconds: 300),
-                curve: Curves.easeOut,
-                width: 44,
-                height: 44,
-                decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  border: Border.all(color: theme.colorScheme.primary, width: 2),
-                  color: _task.done ? theme.colorScheme.primary : Colors.transparent,
-                ),
-                child: AnimatedSwitcher(
-                  duration: const Duration(milliseconds: 200),
-                  child: _task.done
-                      ? Icon(Icons.check, key: const ValueKey('check'),
-                          color: theme.colorScheme.onPrimary, size: 22)
-                      : const SizedBox.shrink(key: ValueKey('empty')),
+              child: AnimatedOpacity(
+                opacity: _isTogglingDone ? 0.6 : 1.0,
+                duration: const Duration(milliseconds: 150),
+                child: AnimatedContainer(
+                  duration: const Duration(milliseconds: 300),
+                  curve: Curves.easeOut,
+                  width: 44,
+                  height: 44,
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    border: Border.all(
+                      color: theme.colorScheme.primary,
+                      width: 2,
+                    ),
+                    color: _task.done
+                        ? theme.colorScheme.primary
+                        : Colors.transparent,
+                  ),
+                  child: AnimatedSwitcher(
+                    duration: const Duration(milliseconds: 200),
+                    child: _task.done
+                        ? Icon(
+                            Icons.check,
+                            key: const ValueKey('check'),
+                            color: theme.colorScheme.onPrimary,
+                            size: 22,
+                          )
+                        : const SizedBox.shrink(key: ValueKey('empty')),
+                  ),
                 ),
               ),
             ),
