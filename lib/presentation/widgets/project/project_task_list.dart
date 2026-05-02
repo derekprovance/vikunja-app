@@ -8,7 +8,7 @@ import 'package:vikunja_app/l10n/gen/app_localizations.dart';
 import 'package:vikunja_app/presentation/manager/project_controller.dart';
 import 'package:vikunja_app/presentation/pages/error_widget.dart';
 import 'package:vikunja_app/presentation/pages/loading_widget.dart';
-import 'package:vikunja_app/presentation/pages/project/project_detail_page.dart';
+import 'package:vikunja_app/presentation/pages/task/task_list_page.dart';
 import 'package:vikunja_app/presentation/pages/task/task_edit_page.dart';
 import 'package:vikunja_app/presentation/widgets/empty_view.dart';
 import 'package:vikunja_app/presentation/widgets/task/task_list_item.dart';
@@ -213,14 +213,14 @@ class ProjectTaskList extends ConsumerWidget {
     }
   }
 
-  void _navigateToDetail(BuildContext context, Project project) {
+  void _navigateToDetail(BuildContext context, Project subproject) {
     Navigator.push(
       context,
       MaterialPageRoute(
         builder: (context) {
-          return ProjectDetailPage(
-            key: Key(project.id.toString()),
-            project: project,
+          return TaskListPage(
+            key: Key(subproject.id.toString()),
+            initialProject: subproject,
           );
         },
       ),

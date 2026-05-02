@@ -11,7 +11,7 @@ import 'package:vikunja_app/presentation/manager/projects_controller.dart';
 import 'package:vikunja_app/presentation/pages/error_widget.dart';
 import 'package:vikunja_app/presentation/pages/loading_widget.dart';
 import 'package:vikunja_app/presentation/pages/project/expansion_title.dart';
-import 'package:vikunja_app/presentation/pages/project/project_detail_page.dart';
+import 'package:vikunja_app/presentation/pages/task/task_list_page.dart';
 import 'package:vikunja_app/presentation/widgets/project/add_project_dialog.dart';
 
 class ProjectListPage extends ConsumerWidget {
@@ -199,9 +199,10 @@ class ProjectListPage extends ConsumerWidget {
       ref.context,
       MaterialPageRoute(
         builder: (context) {
-          return ProjectDetailPage(
+          // Key forces fresh State per project, resetting view index and notification listener
+          return TaskListPage(
             key: Key(project.id.toString()),
-            project: project,
+            initialProject: project,
           );
         },
       ),

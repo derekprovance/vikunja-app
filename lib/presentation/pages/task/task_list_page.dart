@@ -4,11 +4,13 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_spinkit/flutter_spinkit.dart';
 import 'package:vikunja_app/core/di/network_provider.dart';
+import 'package:vikunja_app/core/di/notification_provider.dart';
 import 'package:vikunja_app/domain/entities/project.dart';
 import 'package:vikunja_app/domain/entities/task.dart';
 import 'package:vikunja_app/domain/entities/task_page_model.dart';
 import 'package:vikunja_app/domain/entities/view_kind.dart';
 import 'package:vikunja_app/l10n/gen/app_localizations.dart';
+import 'package:vikunja_app/presentation/manager/notifications.dart';
 import 'package:vikunja_app/presentation/manager/project_controller.dart';
 import 'package:vikunja_app/presentation/manager/projects_controller.dart';
 import 'package:vikunja_app/presentation/manager/task_page_controller.dart';
@@ -78,7 +80,9 @@ String _getSectionTitle(AppLocalizations l10n, _TaskSection section) {
 }
 
 class TaskListPage extends ConsumerStatefulWidget {
-  const TaskListPage({super.key});
+  final Project? initialProject;
+
+  const TaskListPage({super.key, this.initialProject});
 
   @override
   ConsumerState<TaskListPage> createState() => _TaskListPageState();
@@ -87,12 +91,52 @@ class TaskListPage extends ConsumerStatefulWidget {
 class _TaskListPageState extends ConsumerState<TaskListPage> {
   int? _selectedProjectId;
   int _viewIndex = 0;
+  NotificationHandler? _notificationHandler;
 
-  Project? _getSelectedProject(List<Project> projects) {
+  @override
+  void initState() {
+    super.initState();
+    if (widget.initialProject != null) {
+      _selectedProjectId = widget.initialProject!.id;
+    }
+    // Always attach notification handler so picker-selected projects also reload
+    _notificationHandler = ref.read(notificationProvider);
+    _notificationHandler?.addListener(_onNotificationDone);
+  }
+
+  @override
+  void dispose() {
+    _notificationHandler?.removeListener(_onNotificationDone);
+    super.dispose();
+  }
+
+  void _onNotificationDone() {
+    final projectsData = ref.read(projectsControllerProvider);
+    final project = _getSelectedProject(projectsData.value?.projects ?? []);
+    if (project != null) {
+      ref.read(projectControllerProvider(project).notifier).reload();
+    }
+  }
+
+  bool get _isLocked => widget.initialProject != null;
+
+  Future<void> _reloadProjectForView(Project project) async {
+    if (project.views.isEmpty) {
+      ref.read(projectControllerProvider(project).notifier).reload();
+      return;
+    }
+    final safeIndex = _viewIndex.clamp(0, project.views.length - 1);
+    return ref
+        .read(projectControllerProvider(project).notifier)
+        .loadForView(project, safeIndex);
+  }
+
+  Project? _getSelectedProject(Iterable<Project> projects) {
     if (_selectedProjectId == null) return null;
-    final allProjects = projects.expand((p) => [p, ...p.subprojects]);
-    for (final project in allProjects) {
+    for (final project in projects) {
       if (project.id == _selectedProjectId) return project;
+      final found = _getSelectedProject(project.subprojects);
+      if (found != null) return found;
     }
     return null;
   }
@@ -146,20 +190,7 @@ class _TaskListPageState extends ConsumerState<TaskListPage> {
               body: NotificationListener<ScrollNotification>(
                 onNotification: _handleProjectScroll,
                 child: RefreshIndicator(
-                  onRefresh: () async {
-                    if (data.project.views.isEmpty) {
-                      ref
-                          .read(projectControllerProvider(data.project)
-                              .notifier)
-                          .reload();
-                      return;
-                    }
-                    final safeIndex =
-                        _viewIndex.clamp(0, data.project.views.length - 1);
-                    return ref
-                        .read(projectControllerProvider(data.project).notifier)
-                        .loadForView(data.project, safeIndex);
-                  },
+                  onRefresh: () => _reloadProjectForView(data.project),
                   child: _buildProjectBody(data.project),
                 ),
               ),
@@ -167,19 +198,7 @@ class _TaskListPageState extends ConsumerState<TaskListPage> {
             ),
             error: (err, _) => VikunjaErrorWidget(
               error: err,
-              onRetry: () async {
-                if (project.views.isEmpty) {
-                  ref
-                      .read(projectControllerProvider(project).notifier)
-                      .reload();
-                  return;
-                }
-                final safeIndex =
-                    _viewIndex.clamp(0, project.views.length - 1);
-                return ref
-                    .read(projectControllerProvider(project).notifier)
-                    .loadForView(project, safeIndex);
-              },
+              onRetry: () => _reloadProjectForView(project),
             ),
             loading: () => const LoadingWidget(),
           );
@@ -222,8 +241,9 @@ class _TaskListPageState extends ConsumerState<TaskListPage> {
   AppBar _buildProjectAppBar(Project project, bool displayDoneTask) {
     final hasViews = project.views.isNotEmpty;
     final safeIndex = hasViews ? _viewIndex.clamp(0, project.views.length - 1) : 0;
+    final title = _isLocked ? Text(project.title) : _buildProjectChip(project);
     return AppBar(
-      title: _buildProjectChip(project),
+      title: title,
       actions: [
         if (hasViews && project.views.length >= 2)
           PopupMenuButton<int>(
