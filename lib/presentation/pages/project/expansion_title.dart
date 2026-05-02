@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 class VikunjaExpansionTile extends StatelessWidget {
   final Widget title;
+  final Widget? subtitle;
   final List<Widget> children;
   final GestureTapCallback? onTitleTap;
   final Widget? leading;
@@ -10,6 +11,7 @@ class VikunjaExpansionTile extends StatelessWidget {
     super.key,
     required this.title,
     required this.children,
+    this.subtitle,
     this.onTitleTap,
     this.leading,
   });
@@ -24,6 +26,7 @@ class VikunjaExpansionTile extends StatelessWidget {
               onTap: onTitleTap,
               child: title,
             ),
+      subtitle: subtitle,
       shape: const Border(),
       collapsedShape: const Border(),
       childrenPadding: const EdgeInsetsDirectional.only(start: 16),

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_spinkit/flutter_spinkit.dart';
+import 'package:flutter_widget_from_html/flutter_widget_from_html.dart';
 import 'package:vikunja_app/core/di/network_provider.dart';
 import 'package:vikunja_app/core/theming/app_colors.dart';
 import 'package:vikunja_app/core/utils/misc.dart';
@@ -81,7 +82,14 @@ class ProjectListPage extends ConsumerWidget {
     final colorScheme = Theme.of(context).colorScheme;
     final appColors = Theme.of(context).extension<AppColors>();
     final starColor = appColors?.success ?? colorScheme.tertiary;
-    final plainDescription = stripHtml(project.description);
+    final hasDescription = stripHtml(project.description).isNotEmpty;
+
+    Widget? descriptionWidget = hasDescription
+        ? Padding(
+            padding: const EdgeInsets.only(top: 8, left: 4),
+            child: HtmlWidget(project.description),
+          )
+        : null;
 
     return Card(
       margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
@@ -90,30 +98,41 @@ class ProjectListPage extends ConsumerWidget {
       child: Stack(
         children: [
           if (project.subprojects.isEmpty)
-            ListTile(
-              leading: _buildLeadingIcon(project),
-              title: Text(project.title),
-              subtitle: plainDescription.isNotEmpty
-                  ? Text(
-                      plainDescription,
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: Theme.of(context)
-                          .textTheme
-                          .bodySmall
-                          ?.copyWith(color: colorScheme.onSurfaceVariant),
-                    )
-                  : null,
-              trailing: project.isFavourite
-                  ? Icon(Icons.star_rounded,
-                      size: 18, color: starColor)
-                  : null,
+            InkWell(
               onTap: () => _navigateToProject(ref, project),
+              child: Padding(
+                padding: const EdgeInsets.all(16),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        _buildLeadingIcon(project),
+                        const SizedBox(width: 16),
+                        Expanded(
+                          child: Text(
+                            project.title,
+                            style: Theme.of(context).textTheme.titleMedium,
+                          ),
+                        ),
+                        if (project.isFavourite)
+                          Padding(
+                            padding: const EdgeInsets.only(left: 4),
+                            child: Icon(Icons.star_rounded,
+                                size: 18, color: starColor),
+                          ),
+                      ],
+                    ),
+                    ?descriptionWidget,
+                  ],
+                ),
+              ),
             )
           else
             VikunjaExpansionTile(
               leading: _buildLeadingIcon(project),
               title: _buildExpandedTitle(context, project, starColor),
+              subtitle: descriptionWidget,
               children: project.subprojects
                   .map((e) => _buildListItem(context, ref, e))
                   .toList(),
