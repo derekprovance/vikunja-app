@@ -1,7 +1,7 @@
 package io.vikunja.flutteringvikunja.widget
 
-import HomeWidgetGlanceState
-import HomeWidgetGlanceStateDefinition
+import es.antonborri.home_widget.HomeWidgetGlanceState
+import es.antonborri.home_widget.HomeWidgetGlanceStateDefinition
 import android.content.Context
 import android.content.SharedPreferences
 import android.text.format.DateFormat
