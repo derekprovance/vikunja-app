@@ -164,7 +164,6 @@ class _TaskListPageState extends ConsumerState<TaskListPage> {
                 ),
               ),
               floatingActionButton: _buildProjectFab(data.project),
-              bottomNavigationBar: _buildBottomNavigation(data.project),
             ),
             error: (err, _) => VikunjaErrorWidget(
               error: err,
@@ -221,9 +220,42 @@ class _TaskListPageState extends ConsumerState<TaskListPage> {
   // ============================================================================
 
   AppBar _buildProjectAppBar(Project project, bool displayDoneTask) {
+    final hasViews = project.views.isNotEmpty;
+    final safeIndex = hasViews ? _viewIndex.clamp(0, project.views.length - 1) : 0;
     return AppBar(
       title: _buildProjectChip(project),
       actions: [
+        if (hasViews && project.views.length >= 2)
+          PopupMenuButton<int>(
+            icon: project.views[safeIndex].icon,
+            tooltip: project.views[safeIndex].title,
+            onSelected: _onViewTapped,
+            itemBuilder: (context) => project.views
+                .asMap()
+                .entries
+                .map(
+                  (entry) => PopupMenuItem<int>(
+                    value: entry.key,
+                    child: IconTheme(
+                      data: IconThemeData(
+                        color: Theme.of(context).colorScheme.onSurface,
+                      ),
+                      child: Row(
+                        children: [
+                          entry.value.icon,
+                          const SizedBox(width: 12),
+                          Text(entry.value.title),
+                          if (entry.key == safeIndex) ...[
+                            const Spacer(),
+                            const Icon(Icons.check, size: 18),
+                          ],
+                        ],
+                      ),
+                    ),
+                  ),
+                )
+                .toList(),
+          ),
         IconButton(
           icon: const Icon(Icons.edit),
           onPressed: () => Navigator.push(
@@ -353,27 +385,6 @@ class _TaskListPageState extends ConsumerState<TaskListPage> {
         child: Text(AppLocalizations.of(context).notImplemented),
       ),
     };
-  }
-
-  // ============================================================================
-  // Bottom Navigation (Project Views)
-  // ============================================================================
-
-  BottomNavigationBar? _buildBottomNavigation(Project project) {
-    if (project.views.length < 2) return null;
-
-    return BottomNavigationBar(
-      type: BottomNavigationBarType.fixed,
-      items: project.views
-          .map((view) => BottomNavigationBarItem(
-                icon: view.icon,
-                label: view.title,
-                tooltip: view.title,
-              ))
-          .toList(),
-      currentIndex: _viewIndex.clamp(0, project.views.length - 1),
-      onTap: _onViewTapped,
-    );
   }
 
   void _onViewTapped(int index) {
