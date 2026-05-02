@@ -11,7 +11,8 @@ import 'package:vikunja_app/presentation/pages/loading_widget.dart';
 import 'package:vikunja_app/presentation/pages/project/project_detail_page.dart';
 import 'package:vikunja_app/presentation/pages/task/task_edit_page.dart';
 import 'package:vikunja_app/presentation/widgets/empty_view.dart';
-import 'package:vikunja_app/presentation/widgets/project/project_task_list_item.dart';
+import 'package:vikunja_app/presentation/widgets/task/task_list_item.dart';
+import 'package:vikunja_app/presentation/widgets/task/task_section_header.dart';
 import 'package:vikunja_app/presentation/widgets/task_bottom_sheet.dart';
 
 class ProjectTaskList extends ConsumerWidget {
@@ -27,29 +28,17 @@ class ProjectTaskList extends ConsumerWidget {
       data: (pageModel) {
         List<Widget> children = [];
         if (project.subprojects.isNotEmpty) {
-          if (pageModel.tasks.isNotEmpty) {
-            children.add(
-              SliverToBoxAdapter(
-                child: _buildSectionHeader(
-                  AppLocalizations.of(context).projectSection,
-                ),
-              ),
-            );
-            children.add(SliverToBoxAdapter(child: Divider()));
-          }
+          children.add(TaskSectionHeader(
+            title: AppLocalizations.of(context).projectSection,
+            count: project.subprojects.length,
+          ));
           children.addAll(_buildProjectList(context));
         }
         if (pageModel.tasks.isNotEmpty) {
-          if (project.subprojects.isNotEmpty) {
-            children.add(
-              SliverToBoxAdapter(
-                child: _buildSectionHeader(
-                  AppLocalizations.of(context).tasksSection,
-                ),
-              ),
-            );
-            children.add(SliverToBoxAdapter(child: Divider()));
-          }
+          children.add(TaskSectionHeader(
+            title: AppLocalizations.of(context).tasksSection,
+            count: pageModel.tasks.length,
+          ));
           children.add(_buildTaskList(ref, pageModel.tasks));
         }
 
@@ -83,28 +72,38 @@ class ProjectTaskList extends ConsumerWidget {
     );
   }
 
-  Widget _buildSectionHeader(String title) {
-    return Padding(
-      padding: EdgeInsets.all(10),
-      child: Text(
-        title,
-        style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
-      ),
-    );
-  }
-
   List<Widget> _buildProjectList(BuildContext context) {
     return [
       SliverList(
         delegate: SliverChildBuilderDelegate((context, index) {
           final subproject = project.subprojects.toList()[index];
-          return ListTile(
-            leading: Icon(Icons.list),
-            onTap: () => _navigateToDetail(context, subproject),
-            title: Text(
-              subproject.title,
-              overflow: TextOverflow.ellipsis,
-              softWrap: false,
+          return Card(
+            margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+            elevation: 0,
+            clipBehavior: Clip.antiAlias,
+            child: Stack(
+              children: [
+                ListTile(
+                  leading: subproject.views.isNotEmpty
+                      ? subproject.views.first.icon
+                      : const Icon(Icons.folder_outlined),
+                  title: Text(
+                    subproject.title,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                  onTap: () => _navigateToDetail(context, subproject),
+                ),
+                if (subproject.color != null)
+                  Positioned(
+                    top: 0,
+                    bottom: 0,
+                    left: 0,
+                    width: 4,
+                    child: IgnorePointer(
+                      child: ColoredBox(color: subproject.color!),
+                    ),
+                  ),
+              ],
             ),
           );
         }, childCount: project.subprojects.length),
@@ -119,15 +118,7 @@ class ProjectTaskList extends ConsumerWidget {
         return ReorderableDelayedDragStartListener(
           key: Key('task_${task.id}'),
           index: index,
-          child: Material(
-            color: Colors.transparent,
-            child: Column(
-              children: [
-                _buildTile(ref, task),
-                if (index < tasks.length - 1) Divider(height: 1),
-              ],
-            ),
-          ),
+          child: _buildTile(ref, task),
         );
       },
       itemCount: tasks.length,
@@ -177,7 +168,7 @@ class ProjectTaskList extends ConsumerWidget {
   }
 
   Widget _buildTile(WidgetRef ref, Task task) {
-    return ProjectTaskListItem(
+    return TaskListItem(
       key: Key(task.id.toString()),
       task: task,
       onTap: () => _showTaskBottomSheet(ref, task),
