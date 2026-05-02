@@ -110,7 +110,7 @@ class _TaskDetailPageState extends ConsumerState<TaskDetailPage> {
                     ? theme.colorScheme.primary
                     : theme.colorScheme.onSurface,
               ),
-              onPressed: _isTogglingDone ? null : _toggleDone,
+              onPressed: _toggleDone,
               tooltip: l10n.done,
             ),
           ],
