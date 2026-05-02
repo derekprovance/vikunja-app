@@ -6,19 +6,16 @@ import 'package:vikunja_app/domain/entities/task.dart';
 import 'package:vikunja_app/presentation/widgets/due_date_card.dart';
 import 'package:vikunja_app/presentation/widgets/label_widget.dart';
 import 'package:vikunja_app/presentation/widgets/project/kanban/priority_batch.dart';
-import 'package:vikunja_app/presentation/widgets/task/task_actions.dart';
 
 class TaskListItem extends StatefulWidget {
   final Task task;
   final Function onTap;
-  final Function onEdit;
   final Function(bool value) onCheckedChanged;
 
   const TaskListItem({
     super.key,
     required this.task,
     required this.onTap,
-    required this.onEdit,
     required this.onCheckedChanged,
   });
 
@@ -105,12 +102,6 @@ class TaskListItemState extends State<TaskListItem> {
                               overflow: TextOverflow.ellipsis,
                             ),
                           ),
-                        ),
-                        const SizedBox(width: 8),
-                        TaskActions(
-                          task: widget.task,
-                          onEdit: () => widget.onEdit(),
-                          variant: TaskActionsVariant.menu,
                         ),
                       ],
                     ),

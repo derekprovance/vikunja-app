@@ -9,10 +9,10 @@ import 'package:vikunja_app/core/utils/priority.dart';
 import 'package:vikunja_app/core/utils/repeat_after_parse.dart';
 import 'package:vikunja_app/domain/entities/task.dart';
 import 'package:vikunja_app/l10n/gen/app_localizations.dart';
-import 'package:vikunja_app/presentation/pages/task/task_comments_page.dart';
 import 'package:vikunja_app/presentation/pages/task/task_edit_page.dart';
 import 'package:vikunja_app/presentation/widgets/label_widget.dart';
 import 'package:vikunja_app/presentation/widgets/task/task_attachment_preview.dart';
+import 'package:vikunja_app/presentation/widgets/task/task_comments.dart';
 
 class TaskDetailPage extends ConsumerStatefulWidget {
   final Task task;
@@ -27,7 +27,6 @@ class _TaskDetailPageState extends ConsumerState<TaskDetailPage> {
   late Task _task;
   bool _modified = false;
   bool _isTogglingDone = false;
-  bool _isFabExpanded = false;
 
   @override
   void initState() {
@@ -71,21 +70,6 @@ class _TaskDetailPageState extends ConsumerState<TaskDetailPage> {
     }
   }
 
-  void _openComments() {
-    Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder: (_) =>
-            TaskCommentsPage(taskId: _task.id, taskTitle: _task.title),
-      ),
-    );
-  }
-
-  void _closeFabAndExecute(VoidCallback action) {
-    setState(() => _isFabExpanded = false);
-    action();
-  }
-
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
@@ -115,23 +99,15 @@ class _TaskDetailPageState extends ConsumerState<TaskDetailPage> {
             ),
           ],
         ),
-        body: Stack(
-          children: [
-            ListView(
-              padding: const EdgeInsets.fromLTRB(16, 4, 16, 88),
-              children: _buildContent(context, l10n, theme),
-            ),
-            if (_isFabExpanded)
-              Positioned.fill(
-                child: GestureDetector(
-                  behavior: HitTestBehavior.opaque,
-                  onTap: () => setState(() => _isFabExpanded = false),
-                  child: const SizedBox.expand(),
-                ),
-              ),
-          ],
+        body: ListView(
+          padding: const EdgeInsets.fromLTRB(16, 4, 16, 80),
+          children: _buildContent(context, l10n, theme),
         ),
-        floatingActionButton: _buildSpeedDial(l10n, theme),
+        floatingActionButton: FloatingActionButton(
+          onPressed: _openEdit,
+          tooltip: l10n.edit,
+          child: const Icon(Icons.edit_outlined),
+        ),
       ),
     );
   }
@@ -178,11 +154,7 @@ class _TaskDetailPageState extends ConsumerState<TaskDetailPage> {
     // Metadata card — only rendered if at least one field has a value
     final metadataRows = _buildMetadataRows(l10n);
     if (metadataRows.isNotEmpty) {
-      widgets.add(
-        Card(
-          child: Column(children: metadataRows),
-        ),
-      );
+      widgets.add(Card(child: Column(children: metadataRows)));
       widgets.add(const SizedBox(height: 16));
     }
 
@@ -247,10 +219,7 @@ class _TaskDetailPageState extends ConsumerState<TaskDetailPage> {
         ),
       );
       widgets.add(
-        TaskAttachmentSection(
-          attachments: _task.attachments,
-          taskId: _task.id,
-        ),
+        TaskAttachmentSection(attachments: _task.attachments, taskId: _task.id),
       );
       widgets.add(const SizedBox(height: 8));
     }
@@ -259,8 +228,11 @@ class _TaskDetailPageState extends ConsumerState<TaskDetailPage> {
     final infoSection = _buildInfoSection(l10n, theme);
     if (infoSection != null) {
       widgets.add(infoSection);
-      widgets.add(const SizedBox(height: 8));
+      widgets.add(const SizedBox(height: 16));
     }
+
+    // Comments section
+    widgets.add(TaskComments(taskId: _task.id));
 
     return widgets;
   }
@@ -382,98 +354,6 @@ class _TaskDetailPageState extends ConsumerState<TaskDetailPage> {
           }).toList(),
         ),
       ),
-    );
-  }
-
-  Widget _buildSpeedDial(AppLocalizations l10n, ThemeData theme) {
-    return Column(
-      mainAxisSize: MainAxisSize.min,
-      crossAxisAlignment: CrossAxisAlignment.end,
-      children: [
-        // Speed dial options (animated)
-        AnimatedSize(
-          duration: const Duration(milliseconds: 200),
-          curve: Curves.easeOut,
-          alignment: Alignment.bottomRight,
-          child: _isFabExpanded
-              ? Padding(
-                  padding: const EdgeInsets.only(bottom: 16),
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    crossAxisAlignment: CrossAxisAlignment.end,
-                    children: [
-                      _buildDialItem(
-                        heroTag: 'fab_edit',
-                        icon: Icons.edit_outlined,
-                        label: l10n.edit,
-                        onTap: () =>
-                            _closeFabAndExecute(() => _openEdit()),
-                      ),
-                      const SizedBox(height: 12),
-                      _buildDialItem(
-                        heroTag: 'fab_done',
-                        icon: _task.done
-                            ? Icons.check_circle
-                            : Icons.check_circle_outline,
-                        label: l10n.done,
-                        onTap: _isTogglingDone
-                            ? null
-                            : () => _closeFabAndExecute(() => _toggleDone()),
-                      ),
-                      const SizedBox(height: 12),
-                      _buildDialItem(
-                        heroTag: 'fab_comments',
-                        icon: Icons.comment_outlined,
-                        label: l10n.comments,
-                        onTap: () =>
-                            _closeFabAndExecute(() => _openComments()),
-                      ),
-                    ],
-                  ),
-                )
-              : const SizedBox.shrink(),
-        ),
-        // Main FAB
-        FloatingActionButton(
-          heroTag: 'fab_main',
-          onPressed: () => setState(() => _isFabExpanded = !_isFabExpanded),
-          child: AnimatedSwitcher(
-            duration: const Duration(milliseconds: 200),
-            child: _isFabExpanded
-                ? const Icon(Icons.close, key: ValueKey('close'))
-                : const Icon(Icons.more_vert, key: ValueKey('more')),
-          ),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildDialItem({
-    required String heroTag,
-    required IconData icon,
-    required String label,
-    required VoidCallback? onTap,
-  }) {
-    return Row(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        Card(
-          elevation: 2,
-          child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-            child: Text(
-              label,
-              style: Theme.of(context).textTheme.labelMedium,
-            ),
-          ),
-        ),
-        const SizedBox(width: 12),
-        FloatingActionButton.small(
-          heroTag: heroTag,
-          onPressed: onTap,
-          child: Icon(icon),
-        ),
-      ],
     );
   }
 }

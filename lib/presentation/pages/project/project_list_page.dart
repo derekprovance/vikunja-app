@@ -117,8 +117,11 @@ class ProjectListPage extends ConsumerWidget {
                         if (project.isFavourite)
                           Padding(
                             padding: const EdgeInsets.only(left: 4),
-                            child: Icon(Icons.star_rounded,
-                                size: 18, color: starColor),
+                            child: Icon(
+                              Icons.star_rounded,
+                              size: 18,
+                              color: starColor,
+                            ),
                           ),
                       ],
                     ),
@@ -130,7 +133,12 @@ class ProjectListPage extends ConsumerWidget {
           else
             VikunjaExpansionTile(
               leading: _buildLeadingIcon(project),
-              title: _buildExpandedTitle(context, project, starColor, subtitleColor),
+              title: _buildExpandedTitle(
+                context,
+                project,
+                starColor,
+                subtitleColor,
+              ),
               subtitle: descriptionWidget,
               children: project.subprojects
                   .map((e) => _buildListItem(context, ref, e))
@@ -143,9 +151,7 @@ class ProjectListPage extends ConsumerWidget {
               bottom: 0,
               left: 0,
               width: 4,
-              child: IgnorePointer(
-                child: ColoredBox(color: project.color!),
-              ),
+              child: IgnorePointer(child: ColoredBox(color: project.color!)),
             ),
         ],
       ),
@@ -160,7 +166,11 @@ class ProjectListPage extends ConsumerWidget {
   }
 
   static Widget _buildExpandedTitle(
-      BuildContext context, Project project, Color starColor, Color subtitleColor) {
+    BuildContext context,
+    Project project,
+    Color starColor,
+    Color subtitleColor,
+  ) {
     return Row(
       children: [
         Expanded(child: Text(project.title)),

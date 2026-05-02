@@ -114,11 +114,13 @@ class _TaskAttachmentSectionState extends ConsumerState<TaskAttachmentSection> {
   Widget _buildFileList(List<TaskAttachment> files) {
     return Column(
       children: files
-          .map((a) => _AttachmentFileTile(
-                key: ValueKey(a.id),
-                attachment: a,
-                taskId: widget.taskId,
-              ))
+          .map(
+            (a) => _AttachmentFileTile(
+              key: ValueKey(a.id),
+              attachment: a,
+              taskId: widget.taskId,
+            ),
+          )
           .toList(),
     );
   }
@@ -162,10 +164,7 @@ class _AttachmentImageThumbnail extends StatelessWidget {
         height: 100,
         decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(10),
-          border: Border.all(
-            color: theme.colorScheme.outlineVariant,
-            width: 1,
-          ),
+          border: Border.all(color: theme.colorScheme.outlineVariant, width: 1),
         ),
         child: ClipRRect(
           borderRadius: BorderRadius.circular(9),
@@ -272,18 +271,15 @@ class _AttachmentFileTileState extends ConsumerState<_AttachmentFileTile> {
   Future<void> _download() async {
     setState(() => _isDownloading = true);
     try {
-      final result = await ref.read(taskRepositoryProvider).downloadAttachment(
-            widget.taskId,
-            widget.attachment,
-          );
+      final result = await ref
+          .read(taskRepositoryProvider)
+          .downloadAttachment(widget.taskId, widget.attachment);
       if (!mounted) return;
       if (result.status == TaskStatus.complete) {
         FileDownloader().openFile(task: result.task);
       } else {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(AppLocalizations.of(context).downloadFailed),
-          ),
+          SnackBar(content: Text(AppLocalizations.of(context).downloadFailed)),
         );
       }
     } finally {
@@ -375,7 +371,9 @@ class _AttachmentFileTileState extends ConsumerState<_AttachmentFileTile> {
     if (mime.startsWith('video/')) return Icons.videocam_outlined;
     if (mime.startsWith('audio/')) return Icons.audiotrack_outlined;
     if (mime.startsWith('image/')) return Icons.image_outlined;
-    if (mime.contains('zip') || mime.contains('archive') || mime.contains('tar')) {
+    if (mime.contains('zip') ||
+        mime.contains('archive') ||
+        mime.contains('tar')) {
       return Icons.folder_zip_outlined;
     }
     if (mime.contains('word') || mime.contains('document')) {
@@ -395,7 +393,9 @@ class _AttachmentFileTileState extends ConsumerState<_AttachmentFileTile> {
     if (mime.startsWith('video/')) return Colors.purple.shade600;
     if (mime.startsWith('audio/')) return Colors.orange.shade700;
     if (mime.startsWith('image/')) return Colors.blue.shade600;
-    if (mime.contains('zip') || mime.contains('archive') || mime.contains('tar')) {
+    if (mime.contains('zip') ||
+        mime.contains('archive') ||
+        mime.contains('tar')) {
       return Colors.brown.shade600;
     }
     if (mime.contains('word') || mime.contains('document')) {

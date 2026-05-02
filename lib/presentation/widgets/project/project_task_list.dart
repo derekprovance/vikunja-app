@@ -9,7 +9,6 @@ import 'package:vikunja_app/presentation/manager/project_controller.dart';
 import 'package:vikunja_app/presentation/pages/error_widget.dart';
 import 'package:vikunja_app/presentation/pages/loading_widget.dart';
 import 'package:vikunja_app/presentation/pages/task/task_list_page.dart';
-import 'package:vikunja_app/presentation/pages/task/task_edit_page.dart';
 import 'package:vikunja_app/presentation/widgets/empty_view.dart';
 import 'package:vikunja_app/presentation/widgets/task/task_list_item.dart';
 import 'package:vikunja_app/presentation/widgets/task/task_section_header.dart';
@@ -176,7 +175,6 @@ class ProjectTaskList extends ConsumerWidget {
       key: Key(task.id.toString()),
       task: task,
       onTap: () => _openTaskDetail(ref, task),
-      onEdit: () => _onEdit(ref, task),
       onCheckedChanged: (value) async {
         var success = await ref
             .read(projectControllerProvider(project).notifier)
@@ -197,17 +195,6 @@ class ProjectTaskList extends ConsumerWidget {
       ref.context,
       MaterialPageRoute(builder: (_) => TaskDetailPage(task: task)),
     );
-    if (editedTask != null) {
-      ref.read(projectControllerProvider(project).notifier).reload();
-    }
-  }
-
-  void _onEdit(WidgetRef ref, Task task) async {
-    var editedTask = await Navigator.push<Task?>(
-      ref.context,
-      MaterialPageRoute(builder: (buildContext) => TaskEditPage(task: task)),
-    );
-
     if (editedTask != null) {
       ref.read(projectControllerProvider(project).notifier).reload();
     }

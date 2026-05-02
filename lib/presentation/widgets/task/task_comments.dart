@@ -53,7 +53,9 @@ class TaskComments extends ConsumerWidget {
           ),
           TextButton(
             onPressed: () => Navigator.pop(context, true),
-            style: TextButton.styleFrom(foregroundColor: Colors.red),
+            style: TextButton.styleFrom(
+              foregroundColor: Theme.of(context).colorScheme.error,
+            ),
             child: Text(l10n.delete),
           ),
         ],
@@ -109,7 +111,7 @@ class TaskComments extends ConsumerWidget {
           loading: () => const Center(child: CircularProgressIndicator()),
           error: (error, _) => Text(
             l10n.commentsLoadError,
-            style: const TextStyle(color: Colors.red),
+            style: TextStyle(color: Theme.of(context).colorScheme.error),
           ),
         ),
       ],
@@ -126,17 +128,17 @@ class TaskComments extends ConsumerWidget {
         padding: const EdgeInsets.symmetric(vertical: 8.0),
         child: Text(
           AppLocalizations.of(context).noComments,
-          style: const TextStyle(color: Colors.grey),
+          style: TextStyle(
+            color: Theme.of(context).colorScheme.onSurfaceVariant,
+          ),
         ),
       );
     }
 
-    return ListView.builder(
-      shrinkWrap: true,
-      physics: const NeverScrollableScrollPhysics(),
-      itemCount: comments.length,
-      itemBuilder: (context, index) =>
-          _buildCommentItem(context, ref, comments[index]),
+    return Column(
+      children: comments
+          .map((comment) => _buildCommentItem(context, ref, comment))
+          .toList(),
     );
   }
 
@@ -145,7 +147,7 @@ class TaskComments extends ConsumerWidget {
     WidgetRef ref,
     TaskComment comment,
   ) {
-    final currentUser = ref.read(currentUserProvider);
+    final currentUser = ref.watch(currentUserProvider);
     final isOwner = currentUser?.id == comment.author.id;
     final dateFormat = DateFormat.yMd().add_jm();
     final l10n = AppLocalizations.of(context);

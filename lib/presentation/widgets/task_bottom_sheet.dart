@@ -78,9 +78,7 @@ class TaskBottomSheetState extends State<TaskBottomSheet> {
                     mainAxisSize: MainAxisSize.min,
                     children: [
                       TaskActions(
-                        task: widget.task,
                         onEdit: () => widget.onEdit(),
-                        variant: TaskActionsVariant.icons,
                         onBeforeAction: () => Navigator.of(context).pop(),
                       ),
                     ],

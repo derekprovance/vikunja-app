@@ -22,10 +22,7 @@ class VikunjaExpansionTile extends StatelessWidget {
       leading: leading,
       title: onTitleTap == null
           ? title
-          : InkWell(
-              onTap: onTitleTap,
-              child: title,
-            ),
+          : InkWell(onTap: onTitleTap, child: title),
       subtitle: subtitle,
       shape: const Border(),
       collapsedShape: const Border(),

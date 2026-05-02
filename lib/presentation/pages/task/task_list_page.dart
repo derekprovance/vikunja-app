@@ -17,7 +17,6 @@ import 'package:vikunja_app/presentation/manager/task_page_controller.dart';
 import 'package:vikunja_app/presentation/pages/error_widget.dart';
 import 'package:vikunja_app/presentation/pages/loading_widget.dart';
 import 'package:vikunja_app/presentation/pages/project/project_edit.dart';
-import 'package:vikunja_app/presentation/pages/task/task_edit_page.dart';
 import 'package:vikunja_app/presentation/widgets/empty_view.dart';
 import 'package:vikunja_app/presentation/widgets/project/kanban/kanban_widget.dart';
 import 'package:vikunja_app/presentation/widgets/project/project_task_list.dart';
@@ -220,9 +219,9 @@ class _TaskListPageState extends ConsumerState<TaskListPage> {
         Tooltip(
           message: AppLocalizations.of(context).onlyShowTasksWithDueDate,
           child: IconButton(
-            icon: Icon(model.onlyDueDate
-                ? Icons.filter_list
-                : Icons.filter_list_alt),
+            icon: Icon(
+              model.onlyDueDate ? Icons.filter_list : Icons.filter_list_alt,
+            ),
             onPressed: () {
               ref
                   .read(taskPageControllerProvider.notifier)
@@ -240,7 +239,9 @@ class _TaskListPageState extends ConsumerState<TaskListPage> {
 
   AppBar _buildProjectAppBar(Project project, bool displayDoneTask) {
     final hasViews = project.views.isNotEmpty;
-    final safeIndex = hasViews ? _viewIndex.clamp(0, project.views.length - 1) : 0;
+    final safeIndex = hasViews
+        ? _viewIndex.clamp(0, project.views.length - 1)
+        : 0;
     final title = _isLocked ? Text(project.title) : _buildProjectChip(project);
     return AppBar(
       title: title,
@@ -308,9 +309,7 @@ class _TaskListPageState extends ConsumerState<TaskListPage> {
         child: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Flexible(
-              child: Text(label, overflow: TextOverflow.ellipsis),
-            ),
+            Flexible(child: Text(label, overflow: TextOverflow.ellipsis)),
             const SizedBox(width: 4),
             const Icon(Icons.arrow_drop_down, size: 18),
           ],
@@ -434,7 +433,8 @@ class _TaskListPageState extends ConsumerState<TaskListPage> {
         if (model.defaultProjectId == 0) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
-                content: Text(AppLocalizations.of(context).selectDefaultProject)),
+              content: Text(AppLocalizations.of(context).selectDefaultProject),
+            ),
           );
         } else {
           _addAllTasksDialog(model.defaultProjectId);
@@ -478,9 +478,7 @@ class _TaskListPageState extends ConsumerState<TaskListPage> {
       if (projectsData.value != null) {
         final project = _getSelectedProject(projectsData.value!.projects);
         if (project != null) {
-          ref
-              .read(projectControllerProvider(project).notifier)
-              .loadNextPage();
+          ref.read(projectControllerProvider(project).notifier).loadNextPage();
         }
       }
     }
@@ -503,12 +501,6 @@ class _TaskListPageState extends ConsumerState<TaskListPage> {
         if (result != null && result.done) {
           ref.read(taskPageControllerProvider.notifier).reload();
         }
-      },
-      onEdit: () {
-        Navigator.push<Task?>(
-          context,
-          MaterialPageRoute(builder: (_) => TaskEditPage(task: task)),
-        );
       },
       onCheckedChanged: (value) async {
         var success = await ref
@@ -565,9 +557,7 @@ class _TaskListPageState extends ConsumerState<TaskListPage> {
         );
       } else {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(AppLocalizations.of(context).taskAddError),
-          ),
+          SnackBar(content: Text(AppLocalizations.of(context).taskAddError)),
         );
       }
     }
@@ -581,8 +571,7 @@ class _TaskListPageState extends ConsumerState<TaskListPage> {
     showDialog(
       context: context,
       builder: (_) => AddTaskDialog(
-        onAddTask: (title, dueDate) =>
-            _addProjectTask(project, title, dueDate),
+        onAddTask: (title, dueDate) => _addProjectTask(project, title, dueDate),
       ),
     );
   }
@@ -610,11 +599,15 @@ class _TaskListPageState extends ConsumerState<TaskListPage> {
         .addTask(project, task);
 
     if (!mounted) return;
-    ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-      content: Text(success
-          ? AppLocalizations.of(context).taskAddedSuccess
-          : AppLocalizations.of(context).taskAddError),
-    ));
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(
+          success
+              ? AppLocalizations.of(context).taskAddedSuccess
+              : AppLocalizations.of(context).taskAddError,
+        ),
+      ),
+    );
   }
 }
 
@@ -651,10 +644,9 @@ class _ProjectPickerSheet extends ConsumerWidget {
                 width: 40,
                 height: 4,
                 decoration: BoxDecoration(
-                  color: Theme.of(context)
-                      .colorScheme
-                      .onSurfaceVariant
-                      .withValues(alpha: 0.4),
+                  color: Theme.of(
+                    context,
+                  ).colorScheme.onSurfaceVariant.withValues(alpha: 0.4),
                   borderRadius: BorderRadius.circular(2),
                 ),
               ),
@@ -673,8 +665,10 @@ class _ProjectPickerSheet extends ConsumerWidget {
               leading: const Icon(Icons.home_outlined),
               title: Text(l10n.allTasks),
               trailing: currentProjectId == null
-                  ? Icon(Icons.check,
-                      color: Theme.of(context).colorScheme.primary)
+                  ? Icon(
+                      Icons.check,
+                      color: Theme.of(context).colorScheme.primary,
+                    )
                   : null,
               selected: currentProjectId == null,
               onTap: () {
@@ -728,17 +722,13 @@ class _ProjectPickerSheet extends ConsumerWidget {
     final isSelected = project.id == currentProjectId;
 
     return ListTile(
-      contentPadding: EdgeInsets.only(
-        left: 16 + (depth * 16.0),
-        right: 16,
-      ),
+      contentPadding: EdgeInsets.only(left: 16 + (depth * 16.0), right: 16),
       leading: project.views.isNotEmpty
           ? project.views.first.icon
           : const Icon(Icons.folder_outlined),
       title: Text(project.title, overflow: TextOverflow.ellipsis),
       trailing: isSelected
-          ? Icon(Icons.check,
-              color: Theme.of(context).colorScheme.primary)
+          ? Icon(Icons.check, color: Theme.of(context).colorScheme.primary)
           : null,
       selected: isSelected,
       onTap: () {
