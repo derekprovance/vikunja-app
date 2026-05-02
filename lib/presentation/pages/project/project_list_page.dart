@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_spinkit/flutter_spinkit.dart';
 import 'package:vikunja_app/core/di/network_provider.dart';
+import 'package:vikunja_app/core/theming/app_colors.dart';
 import 'package:vikunja_app/domain/entities/project.dart';
 import 'package:vikunja_app/l10n/gen/app_localizations.dart';
 import 'package:vikunja_app/presentation/manager/projects_controller.dart';
@@ -35,7 +36,7 @@ class ProjectListPage extends ConsumerWidget {
               child: ListView.separated(
                 itemCount: itemCount,
                 separatorBuilder: (BuildContext context, int index) =>
-                    const Divider(height: 8),
+                    const SizedBox.shrink(),
                 itemBuilder: (context, index) {
                   if (index == projects.length) {
                     return Padding(
@@ -48,7 +49,7 @@ class ProjectListPage extends ConsumerWidget {
                       ),
                     );
                   }
-                  return _buildListItem(ref, projects[index]);
+                  return _buildListItem(context, ref, projects[index]);
                 },
               ),
               onRefresh: () async {
@@ -75,26 +76,89 @@ class ProjectListPage extends ConsumerWidget {
     );
   }
 
-  Widget _buildListItem(WidgetRef ref, Project project) {
-    if (project.subprojects.isEmpty == true) {
-      return ListTile(
-        leading: Icon(Icons.list),
-        title: Text(project.title),
-        onTap: () {
-          _navigateToProject(ref, project);
-        },
-      );
-    } else {
-      return VikunjaExpansionTile(
-        title: Text(project.title),
-        children: project.subprojects
-            .map((e) => _buildListItem(ref, e))
-            .toList(),
-        onTitleTap: () {
-          _navigateToProject(ref, project);
-        },
-      );
+  Widget _buildListItem(BuildContext context, WidgetRef ref, Project project) {
+    final colorScheme = Theme.of(context).colorScheme;
+    final appColors = Theme.of(context).extension<AppColors>();
+    final starColor = appColors?.success ?? colorScheme.tertiary;
+
+    return Card(
+      margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+      elevation: 0,
+      clipBehavior: Clip.antiAlias,
+      child: Stack(
+        children: [
+          if (project.subprojects.isEmpty)
+            ListTile(
+              leading: _buildLeadingIcon(project),
+              title: Text(project.title),
+              subtitle: project.description.isNotEmpty
+                  ? Text(
+                      project.description,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: Theme.of(context)
+                          .textTheme
+                          .bodySmall
+                          ?.copyWith(color: colorScheme.onSurfaceVariant),
+                    )
+                  : null,
+              trailing: project.isFavourite
+                  ? Icon(Icons.star_rounded,
+                      size: 18, color: starColor)
+                  : null,
+              onTap: () => _navigateToProject(ref, project),
+            )
+          else
+            VikunjaExpansionTile(
+              leading: _buildLeadingIcon(project),
+              title: _buildExpandedTitle(context, project, starColor),
+              children: project.subprojects
+                  .map((e) => _buildListItem(context, ref, e))
+                  .toList(),
+              onTitleTap: () => _navigateToProject(ref, project),
+            ),
+          if (project.color != null)
+            Positioned(
+              top: 0,
+              bottom: 0,
+              left: 0,
+              width: 4,
+              child: IgnorePointer(
+                child: ColoredBox(color: project.color!),
+              ),
+            ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildLeadingIcon(Project project) {
+    if (project.views.isNotEmpty) {
+      return project.views.first.icon;
     }
+    return const Icon(Icons.folder_outlined);
+  }
+
+  Widget _buildExpandedTitle(
+      BuildContext context, Project project, Color starColor) {
+    final colorScheme = Theme.of(context).colorScheme;
+    return Row(
+      children: [
+        Expanded(child: Text(project.title)),
+        if (project.isFavourite)
+          Padding(
+            padding: const EdgeInsets.only(right: 4),
+            child: Icon(Icons.star_rounded, size: 16, color: starColor),
+          ),
+        ...project.views.take(3).map((v) {
+          final iconData = v.icon.icon;
+          return Padding(
+            padding: const EdgeInsets.only(left: 4),
+            child: Icon(iconData, size: 14, color: colorScheme.onSurfaceVariant),
+          );
+        }),
+      ],
+    );
   }
 
   void _addProjectDialog(WidgetRef ref) {
