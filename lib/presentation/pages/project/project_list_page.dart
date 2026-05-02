@@ -35,10 +35,8 @@ class ProjectListPage extends ConsumerWidget {
               return false;
             },
             child: RefreshIndicator(
-              child: ListView.separated(
+              child: ListView.builder(
                 itemCount: itemCount,
-                separatorBuilder: (BuildContext context, int index) =>
-                    const SizedBox.shrink(),
                 itemBuilder: (context, index) {
                   if (index == projects.length) {
                     return Padding(
@@ -82,6 +80,7 @@ class ProjectListPage extends ConsumerWidget {
     final colorScheme = Theme.of(context).colorScheme;
     final appColors = Theme.of(context).extension<AppColors>();
     final starColor = appColors?.success ?? colorScheme.tertiary;
+    final subtitleColor = colorScheme.onSurfaceVariant;
     final hasDescription = stripHtml(project.description).isNotEmpty;
 
     Widget? descriptionWidget = hasDescription
@@ -131,7 +130,7 @@ class ProjectListPage extends ConsumerWidget {
           else
             VikunjaExpansionTile(
               leading: _buildLeadingIcon(project),
-              title: _buildExpandedTitle(context, project, starColor),
+              title: _buildExpandedTitle(context, project, starColor, subtitleColor),
               subtitle: descriptionWidget,
               children: project.subprojects
                   .map((e) => _buildListItem(context, ref, e))
@@ -153,29 +152,27 @@ class ProjectListPage extends ConsumerWidget {
     );
   }
 
-  Widget _buildLeadingIcon(Project project) {
+  static Widget _buildLeadingIcon(Project project) {
     if (project.views.isNotEmpty) {
-      return project.views.first.icon;
+      return Icon(project.views.first.iconData);
     }
     return const Icon(Icons.folder_outlined);
   }
 
-  Widget _buildExpandedTitle(
-      BuildContext context, Project project, Color starColor) {
-    final colorScheme = Theme.of(context).colorScheme;
+  static Widget _buildExpandedTitle(
+      BuildContext context, Project project, Color starColor, Color subtitleColor) {
     return Row(
       children: [
         Expanded(child: Text(project.title)),
         if (project.isFavourite)
           Padding(
             padding: const EdgeInsets.only(right: 4),
-            child: Icon(Icons.star_rounded, size: 16, color: starColor),
+            child: Icon(Icons.star_rounded, size: 18, color: starColor),
           ),
         ...project.views.take(3).map((v) {
-          final iconData = v.icon.icon;
           return Padding(
             padding: const EdgeInsets.only(left: 4),
-            child: Icon(iconData, size: 14, color: colorScheme.onSurfaceVariant),
+            child: Icon(v.iconData, size: 14, color: subtitleColor),
           );
         }),
       ],

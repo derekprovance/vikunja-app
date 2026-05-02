@@ -30,6 +30,19 @@ class ProjectView {
     }
   }
 
+  IconData get iconData {
+    switch (viewKind) {
+      case ViewKind.list:
+        return Icons.view_list;
+      case ViewKind.kanban:
+        return Icons.view_kanban;
+      case ViewKind.gantt:
+        return Icons.view_timeline;
+      case ViewKind.table:
+        return Icons.table_chart;
+    }
+  }
+
   ProjectView(
     this.created,
     this.defaultBucketId,

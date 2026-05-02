@@ -44,7 +44,6 @@ class Project {
     Color? color,
     bool? isArchived,
     bool? isFavourite,
-    int? doneBucketId,
     double? position,
     List<ProjectView>? views,
   }) {
