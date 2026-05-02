@@ -15,7 +15,7 @@ import 'package:vikunja_app/presentation/widgets/empty_view.dart';
 import 'package:vikunja_app/presentation/widgets/task/add_task_dialog.dart';
 import 'package:vikunja_app/presentation/widgets/task/task_list_item.dart';
 import 'package:vikunja_app/presentation/widgets/task/task_section_header.dart';
-import 'package:vikunja_app/presentation/widgets/task_bottom_sheet.dart';
+import 'package:vikunja_app/presentation/pages/task/task_detail_page.dart';
 
 enum _TaskSection { overdue, today, tomorrow, thisWeek, later, noDueDate }
 
@@ -37,7 +37,8 @@ class TaskListPage extends ConsumerWidget {
             },
             child: NotificationListener<ScrollNotification>(
               onNotification: (ScrollNotification scrollInfo) {
-                if (scrollInfo.metrics.pixels == scrollInfo.metrics.maxScrollExtent) {
+                if (scrollInfo.metrics.pixels ==
+                    scrollInfo.metrics.maxScrollExtent) {
                   ref.read(taskPageControllerProvider.notifier).loadNextPage();
                 }
                 return false;
@@ -48,9 +49,9 @@ class TaskListPage extends ConsumerWidget {
           floatingActionButton: FloatingActionButton(
             onPressed: () {
               if (model.defaultProjectId == 0) {
-                ScaffoldMessenger.of(
-                  context,
-                ).showSnackBar(SnackBar(content: Text(l10n.selectDefaultProject)));
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(content: Text(l10n.selectDefaultProject)),
+                );
               } else {
                 _addItemDialog(ref, context, model.defaultProjectId);
               }
@@ -59,8 +60,10 @@ class TaskListPage extends ConsumerWidget {
           ),
         );
       },
-      error: (err, _) =>
-          VikunjaErrorWidget(error: err, onRetry: () => ref.invalidate(taskPageControllerProvider)),
+      error: (err, _) => VikunjaErrorWidget(
+        error: err,
+        onRetry: () => ref.invalidate(taskPageControllerProvider),
+      ),
       loading: () => const LoadingWidget(),
     );
   }
@@ -96,7 +99,10 @@ class TaskListPage extends ConsumerWidget {
           child: Padding(
             padding: const EdgeInsets.symmetric(vertical: 16.0),
             child: Center(
-              child: SpinKitThreeBounce(color: Theme.of(context).primaryColor, size: 16),
+              child: SpinKitThreeBounce(
+                color: Theme.of(context).primaryColor,
+                size: 16,
+              ),
             ),
           ),
         ),
@@ -125,14 +131,21 @@ class TaskListPage extends ConsumerWidget {
 
   void _onlyDueDateChanged(WidgetRef ref, BuildContext context, bool newValue) {
     Navigator.pop(context);
-    ref.read(taskPageControllerProvider.notifier).setLandingPageOnlyDueDateTasks(newValue);
+    ref
+        .read(taskPageControllerProvider.notifier)
+        .setLandingPageOnlyDueDateTasks(newValue);
   }
 
-  void _addItemDialog(WidgetRef ref, BuildContext context, int defaultProjectId) {
+  void _addItemDialog(
+    WidgetRef ref,
+    BuildContext context,
+    int defaultProjectId,
+  ) {
     showDialog(
       context: context,
       builder: (_) => AddTaskDialog(
-        onAddTask: (title, dueDate) => _addTask(ref, title, dueDate, defaultProjectId),
+        onAddTask: (title, dueDate) =>
+            _addTask(ref, title, dueDate, defaultProjectId),
       ),
     );
   }
@@ -161,13 +174,17 @@ class TaskListPage extends ConsumerWidget {
 
     if (ref.context.mounted) {
       if (success) {
-        ScaffoldMessenger.of(
-          ref.context,
-        ).showSnackBar(SnackBar(content: Text(AppLocalizations.of(ref.context).taskAddedSuccess)));
+        ScaffoldMessenger.of(ref.context).showSnackBar(
+          SnackBar(
+            content: Text(AppLocalizations.of(ref.context).taskAddedSuccess),
+          ),
+        );
       } else {
-        ScaffoldMessenger.of(
-          ref.context,
-        ).showSnackBar(SnackBar(content: Text(AppLocalizations.of(ref.context).taskAddError)));
+        ScaffoldMessenger.of(ref.context).showSnackBar(
+          SnackBar(
+            content: Text(AppLocalizations.of(ref.context).taskAddError),
+          ),
+        );
       }
     }
   }
@@ -176,30 +193,32 @@ class TaskListPage extends ConsumerWidget {
     return TaskListItem(
       key: Key(task.id.toString()),
       task: task,
-      onTap: () {
-        _showTaskBottomSheet(context, task);
+      onTap: () async {
+        final result = await _openTaskDetail(context, task);
+        if (result != null && result.done) {
+          ref.read(taskPageControllerProvider.notifier).reload();
+        }
       },
       onEdit: () => _onEdit(context, task),
       onCheckedChanged: (value) async {
-        var success = await ref.read(taskPageControllerProvider.notifier).markAsDone(task);
+        var success = await ref
+            .read(taskPageControllerProvider.notifier)
+            .markAsDone(task);
         if (!success && context.mounted) {
-          ScaffoldMessenger.of(
-            context,
-          ).showSnackBar(SnackBar(content: Text(AppLocalizations.of(context).taskMarkDoneError)));
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(AppLocalizations.of(context).taskMarkDoneError),
+            ),
+          );
         }
       },
     );
   }
 
-  void _showTaskBottomSheet(BuildContext context, Task task) {
-    showModalBottomSheet<void>(
-      context: context,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(10.0)),
-      ),
-      builder: (BuildContext context) {
-        return TaskBottomSheet(task: task, onEdit: () => _onEdit(context, task));
-      },
+  Future<Task?> _openTaskDetail(BuildContext context, Task task) {
+    return Navigator.push<Task?>(
+      context,
+      MaterialPageRoute(builder: (_) => TaskDetailPage(task: task)),
     );
   }
 
@@ -226,14 +245,19 @@ class TaskListPage extends ConsumerWidget {
       if (!task.hasDueDate) {
         grouped[_TaskSection.noDueDate]!.add(task);
       } else {
-        final dueDate = DateTime(task.dueDate!.year, task.dueDate!.month, task.dueDate!.day);
+        final dueDate = DateTime(
+          task.dueDate!.year,
+          task.dueDate!.month,
+          task.dueDate!.day,
+        );
         if (dueDate.isBefore(todayStart)) {
           grouped[_TaskSection.overdue]!.add(task);
         } else if (dueDate == todayStart) {
           grouped[_TaskSection.today]!.add(task);
         } else if (dueDate == tomorrowStart) {
           grouped[_TaskSection.tomorrow]!.add(task);
-        } else if (!dueDate.isBefore(dayAfterTomorrowStart) && dueDate.isBefore(weekEnd)) {
+        } else if (!dueDate.isBefore(dayAfterTomorrowStart) &&
+            dueDate.isBefore(weekEnd)) {
           grouped[_TaskSection.thisWeek]!.add(task);
         } else {
           grouped[_TaskSection.later]!.add(task);

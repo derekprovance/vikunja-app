@@ -13,7 +13,7 @@ import 'package:vikunja_app/presentation/pages/task/task_edit_page.dart';
 import 'package:vikunja_app/presentation/widgets/empty_view.dart';
 import 'package:vikunja_app/presentation/widgets/task/task_list_item.dart';
 import 'package:vikunja_app/presentation/widgets/task/task_section_header.dart';
-import 'package:vikunja_app/presentation/widgets/task_bottom_sheet.dart';
+import 'package:vikunja_app/presentation/pages/task/task_detail_page.dart';
 
 class ProjectTaskList extends ConsumerWidget {
   final Project project;
@@ -28,17 +28,21 @@ class ProjectTaskList extends ConsumerWidget {
       data: (pageModel) {
         List<Widget> children = [];
         if (project.subprojects.isNotEmpty) {
-          children.add(TaskSectionHeader(
-            title: AppLocalizations.of(context).projectSection,
-            count: project.subprojects.length,
-          ));
+          children.add(
+            TaskSectionHeader(
+              title: AppLocalizations.of(context).projectSection,
+              count: project.subprojects.length,
+            ),
+          );
           children.addAll(_buildProjectList(context));
         }
         if (pageModel.tasks.isNotEmpty) {
-          children.add(TaskSectionHeader(
-            title: AppLocalizations.of(context).tasksSection,
-            count: pageModel.tasks.length,
-          ));
+          children.add(
+            TaskSectionHeader(
+              title: AppLocalizations.of(context).tasksSection,
+              count: pageModel.tasks.length,
+            ),
+          );
           children.add(_buildTaskList(ref, pageModel.tasks));
         }
 
@@ -171,7 +175,7 @@ class ProjectTaskList extends ConsumerWidget {
     return TaskListItem(
       key: Key(task.id.toString()),
       task: task,
-      onTap: () => _showTaskBottomSheet(ref, task),
+      onTap: () => _openTaskDetail(ref, task),
       onEdit: () => _onEdit(ref, task),
       onCheckedChanged: (value) async {
         var success = await ref
@@ -188,16 +192,14 @@ class ProjectTaskList extends ConsumerWidget {
     );
   }
 
-  void _showTaskBottomSheet(WidgetRef ref, Task task) {
-    showModalBottomSheet<void>(
-      context: ref.context,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(10.0)),
-      ),
-      builder: (BuildContext context) {
-        return TaskBottomSheet(task: task, onEdit: () => _onEdit(ref, task));
-      },
+  Future<void> _openTaskDetail(WidgetRef ref, Task task) async {
+    final editedTask = await Navigator.push<Task?>(
+      ref.context,
+      MaterialPageRoute(builder: (_) => TaskDetailPage(task: task)),
     );
+    if (editedTask != null) {
+      ref.read(projectControllerProvider(project).notifier).reload();
+    }
   }
 
   void _onEdit(WidgetRef ref, Task task) async {
