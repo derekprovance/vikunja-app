@@ -163,6 +163,8 @@
   },
   "downloading": "Downloading",
   "downloadFinished": "Download finished",
+  "downloadFailed": "Download failed",
+  "imagesLoadFailed": "Failed to load images",
   "changeBucketTitle": "Change the title of '{title}'",
   "@changeBucketTitle": {
     "description": "Dialog title for changing a Kanban bucket title.",

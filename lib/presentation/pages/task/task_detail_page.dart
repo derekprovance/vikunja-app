@@ -10,6 +10,7 @@ import 'package:vikunja_app/l10n/gen/app_localizations.dart';
 import 'package:vikunja_app/presentation/pages/task/task_comments_page.dart';
 import 'package:vikunja_app/presentation/pages/task/task_edit_page.dart';
 import 'package:vikunja_app/presentation/widgets/label_widget.dart';
+import 'package:vikunja_app/presentation/widgets/task/task_attachment_preview.dart';
 
 class TaskDetailPage extends ConsumerStatefulWidget {
   final Task task;
@@ -243,29 +244,13 @@ class _TaskDetailPageState extends ConsumerState<TaskDetailPage> {
           child: Text(l10n.file, style: theme.textTheme.labelLarge),
         ),
       );
-      for (final attachment in _task.attachments) {
-        widgets.add(
-          Padding(
-            padding: const EdgeInsets.only(bottom: 6, left: 4),
-            child: Row(
-              children: [
-                Icon(
-                  Icons.attachment,
-                  size: 16,
-                  color: theme.colorScheme.onSurfaceVariant,
-                ),
-                const SizedBox(width: 8),
-                Expanded(
-                  child: Text(
-                    attachment.file.name,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                ),
-              ],
-            ),
-          ),
-        );
-      }
+      widgets.add(
+        TaskAttachmentSection(
+          attachments: _task.attachments,
+          taskId: _task.id,
+        ),
+      );
+      widgets.add(const SizedBox(height: 8));
     }
 
     return widgets;

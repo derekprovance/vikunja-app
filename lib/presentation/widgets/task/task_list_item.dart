@@ -118,7 +118,8 @@ class TaskListItemState extends State<TaskListItem> {
                     _buildSecondRow(context),
                     if (widget.task.hasDueDate ||
                         (widget.task.priority != null &&
-                            widget.task.priority != 0))
+                            widget.task.priority != 0) ||
+                        widget.task.attachments.isNotEmpty)
                       _buildThirdRow(context),
                   ],
                 ),
@@ -214,10 +215,7 @@ class TaskListItemState extends State<TaskListItem> {
     final hasDueDate = widget.task.hasDueDate;
     final hasPriority =
         widget.task.priority != null && widget.task.priority != 0;
-
-    if (!hasDueDate && !hasPriority) {
-      return const SizedBox.shrink();
-    }
+    final hasAttachments = widget.task.attachments.isNotEmpty;
 
     return Row(
       children: [
@@ -226,7 +224,17 @@ class TaskListItemState extends State<TaskListItem> {
             padding: const EdgeInsets.only(right: 8.0),
             child: DueDateCard(widget.task.dueDate!),
           ),
-        if (hasPriority) PriorityBatch(widget.task.priority!),
+        if (hasPriority)
+          Padding(
+            padding: const EdgeInsets.only(right: 8.0),
+            child: PriorityBatch(widget.task.priority!),
+          ),
+        if (hasAttachments)
+          Icon(
+            Icons.attachment,
+            size: 14,
+            color: Theme.of(context).colorScheme.onSurfaceVariant,
+          ),
       ],
     );
   }
