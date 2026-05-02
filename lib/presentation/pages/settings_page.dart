@@ -17,6 +17,7 @@ import 'package:vikunja_app/l10n/gen/app_localizations.dart';
 import 'package:vikunja_app/presentation/manager/settings_controller.dart';
 import 'package:vikunja_app/presentation/pages/error_widget.dart';
 import 'package:vikunja_app/presentation/pages/loading_widget.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 import 'package:vikunja_app/presentation/pages/login/login_page.dart';
 
 class SettingsPage extends ConsumerStatefulWidget {
@@ -281,20 +282,23 @@ class SettingsPageState extends ConsumerState<SettingsPage> {
           currentAccountPicture: FutureBuilder(
             future: ref.read(clientProviderProvider).getHeaders(),
             builder: (context, asyncSnapshot) {
-              if (asyncSnapshot.hasData && asyncSnapshot.data != null) {
-                return CircleAvatar(
-                  backgroundImage: user.username != ""
-                      ? NetworkImage(
-                          user.avatarUrl(
-                            ref.read(clientProviderProvider).apiBase,
-                          ),
-                          headers: asyncSnapshot.data,
-                        )
-                      : null,
-                );
-              } else {
-                return CircleAvatar();
+              if (!asyncSnapshot.hasData ||
+                  asyncSnapshot.data == null ||
+                  user.username.isEmpty) {
+                return const CircleAvatar();
               }
+              final imageHeaders = Map<String, String>.from(asyncSnapshot.data!)
+                ..remove('Content-Type');
+              return ClipOval(
+                child: SvgPicture.network(
+                  user.avatarUrl(ref.read(clientProviderProvider).apiBase),
+                  headers: imageHeaders,
+                  width: 72,
+                  height: 72,
+                  fit: BoxFit.cover,
+                  placeholderBuilder: (_) => const CircleAvatar(radius: 36),
+                ),
+              );
             },
           ),
           decoration: BoxDecoration(

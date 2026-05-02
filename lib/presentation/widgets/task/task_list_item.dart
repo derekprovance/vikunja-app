@@ -76,9 +76,18 @@ class TaskListItemState extends State<TaskListItem> {
               ),
             ),
             if (widget.task.color != null)
-              ClipRRect(
-                borderRadius: BorderRadius.circular(12),
-                child: Container(width: 4.0, height: double.infinity, color: widget.task.color),
+              Positioned(
+                top: 0,
+                bottom: 0,
+                left: 0,
+                width: 4.0,
+                child: ClipRRect(
+                  borderRadius: const BorderRadius.only(
+                    topLeft: Radius.circular(12),
+                    bottomLeft: Radius.circular(12),
+                  ),
+                  child: Container(color: widget.task.color),
+                ),
               ),
           ],
         ),
