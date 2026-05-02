@@ -94,6 +94,8 @@
   "noNotificationPermission": "No notification permission!",
   "onlyShowTasksWithDueDate": "Only show tasks with due date",
   "noTasks": "No tasks",
+  "allTasks": "All Tasks",
+  "selectProject": "Select Project",
   "noViews": "No views",
   "notImplemented": "Not implemented",
   "homeTab": "Home",
