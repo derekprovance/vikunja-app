@@ -38,7 +38,6 @@ android {
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_17
         targetCompatibility = JavaVersion.VERSION_17
-        coreLibraryDesugaringEnabled true
     }
 
     kotlinOptions {
@@ -47,7 +46,7 @@ android {
 
     defaultConfig {
         applicationId "io.vikunja.app"
-        minSdkVersion flutter.minSdkVersion
+        minSdkVersion 36
         targetSdk flutter.targetSdkVersion
         testInstrumentationRunner "android.support.test.runner.AndroidJUnitRunner"
         versionCode flutterVersionCode.toInteger()
@@ -86,6 +85,9 @@ android {
     buildTypes {
         release {
             // Signing is provided per-flavor (see productFlavors above).
+            minifyEnabled true
+            shrinkResources true
+            proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
         }
     }
     lint {
@@ -104,7 +106,6 @@ flutter {
 }
 
 dependencies {
-    coreLibraryDesugaring 'com.android.tools:desugar_jdk_libs:2.1.4'
     implementation "androidx.glance:glance:1.1.1"
     implementation "androidx.glance:glance-appwidget:1.1.1"
     implementation 'com.google.code.gson:gson:2.8.5'
