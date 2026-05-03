@@ -2,7 +2,7 @@ import 'package:intl/intl.dart';
 
 extension DateExtensions on DateTime {
   String formatShort([String? locale]) {
-    return dateFormatShort().format(this);
+    return dateFormatShort(locale).format(this);
   }
 }
 

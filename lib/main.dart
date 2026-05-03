@@ -42,20 +42,26 @@ const _ignoredNetworkErrors = [
 void main() async {
   SentryWidgetsFlutterBinding.ensureInitialized();
 
+  // Shared settings datasource for reading app settings
+  final settingsDatasource = SettingsDatasource(FlutterSecureStorage());
+
+  // Initialize date formatting with the user's locale
+  String? localeOverride;
+  if (!kIsWeb) {
+    localeOverride = await settingsDatasource.getLocaleOverride();
+  }
+  final effectiveLocale = (localeOverride != null && localeOverride.isNotEmpty)
+      ? Locale(localeOverride)
+      : WidgetsBinding.instance.platformDispatcher.locale;
+  await initializeDateFormatting(effectiveLocale.toLanguageTag());
+
   var notifDenies = await Permission.notification.isDenied;
   if (notifDenies) {
     Permission.notification.request();
   }
 
-  // Shared settings datasource for reading app settings
-  final settingsDatasource = SettingsDatasource(FlutterSecureStorage());
-
   try {
     if (!kIsWeb) {
-      final overrideCode = await settingsDatasource.getLocaleOverride();
-      final effectiveLocale = (overrideCode != null && overrideCode.isNotEmpty)
-          ? Locale(overrideCode)
-          : WidgetsBinding.instance.platformDispatcher.locale;
       final loc = await AppLocalizations.delegate.load(effectiveLocale);
       FileDownloader().configureNotification(
         running: TaskNotification(loc.downloading, '${loc.file}: {filename}'),

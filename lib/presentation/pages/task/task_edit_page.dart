@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:background_downloader/background_downloader.dart'
     show TaskStatus, FileDownloader;
 import 'package:collection/collection.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_colorpicker/flutter_colorpicker.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -263,7 +264,7 @@ class TaskEditPageState extends ConsumerState<TaskEditPage> {
     return Padding(
       padding: EdgeInsets.symmetric(vertical: 8.0),
       child: VikunjaDateTimeField(
-        icon: Icon(Icons.access_time),
+        icon: Icons.access_time,
         label: AppLocalizations.of(context).dueDateLabel,
         initialValue: widget.task.dueDate,
         onChanged: (duedate) {
@@ -368,14 +369,18 @@ class TaskEditPageState extends ConsumerState<TaskEditPage> {
         children:
             _reminderDates?.map((e) {
               return VikunjaDateTimeField(
+                key: ObjectKey(e),
                 label: AppLocalizations.of(context).reminder,
                 initialValue: e.reminder,
                 onChanged: (date) {
-                  if (date != null) {
-                    e.reminder = date;
-                  } else {
-                    _reminderDates?.remove(e);
-                  }
+                  setState(() {
+                    if (date != null) {
+                      e.reminder = date;
+                    } else {
+                      _reminderDates?.remove(e);
+                    }
+                  });
+                  _checkChanged();
                 },
               );
             }).toList() ??
@@ -385,22 +390,24 @@ class TaskEditPageState extends ConsumerState<TaskEditPage> {
   }
 
   Widget _buildAddReminderButton(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 16),
-      child: GestureDetector(
+    final theme = Theme.of(context);
+    return InkWell(
+      onTap: () => _addNewReminder(context),
+      borderRadius: BorderRadius.circular(4),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(vertical: 12),
         child: Row(
-          children: <Widget>[
-            Padding(
-              padding: EdgeInsets.only(right: 16),
-              child: Icon(Icons.alarm_add, color: Colors.grey),
-            ),
+          children: [
+            Icon(Icons.alarm_add, color: theme.colorScheme.onSurfaceVariant),
+            const SizedBox(width: 16),
             Text(
               AppLocalizations.of(context).addReminder,
-              style: TextStyle(color: Colors.grey, fontSize: 16),
+              style: theme.textTheme.bodyMedium?.copyWith(
+                color: theme.colorScheme.onSurfaceVariant,
+              ),
             ),
           ],
         ),
-        onTap: () => _addNewReminder(context),
       ),
     );
   }
@@ -439,7 +446,7 @@ class TaskEditPageState extends ConsumerState<TaskEditPage> {
         children: <Widget>[
           Padding(
             padding: const EdgeInsets.only(right: 15, left: 2),
-            child: Icon(Icons.label, color: Colors.grey),
+            child: Icon(Icons.label, color: Theme.of(context).colorScheme.onSurfaceVariant),
           ),
           SizedBox(
             width:
@@ -486,21 +493,20 @@ class TaskEditPageState extends ConsumerState<TaskEditPage> {
   }
 
   Widget _buildColor() {
+    final theme = Theme.of(context);
     return Padding(
       padding: const EdgeInsets.only(top: 8),
       child: Row(
         children: <Widget>[
           Padding(
             padding: const EdgeInsets.only(right: 15, left: 2),
-            child: Icon(Icons.palette, color: Colors.grey),
+            child: Icon(Icons.palette, color: theme.colorScheme.onSurfaceVariant),
           ),
-          ElevatedButton(
+          FilledButton.tonal(
             style: (_color == null || _color == Colors.black)
                 ? null
-                : ButtonStyle(
-                    backgroundColor: WidgetStateProperty.resolveWith(
-                      (_) => _color,
-                    ),
+                : FilledButton.styleFrom(
+                    backgroundColor: _color,
                   ),
             onPressed: _onColorEdit,
             child: Text(
@@ -508,7 +514,7 @@ class TaskEditPageState extends ConsumerState<TaskEditPage> {
               style: (_color == null || _color == Colors.black)
                   ? null
                   : TextStyle(
-                      color: (_color)!.computeLuminance() > 0.5
+                      color: _color!.computeLuminance() > 0.5
                           ? Colors.black
                           : Colors.white,
                     ),
@@ -526,7 +532,7 @@ class TaskEditPageState extends ConsumerState<TaskEditPage> {
                     ? "#${color.toHexString()}"
                     : AppLocalizations.of(context).none,
                 style: TextStyle(
-                  color: Colors.grey,
+                  color: theme.colorScheme.onSurfaceVariant,
                   fontStyle: FontStyle.italic,
                 ),
               );
@@ -647,38 +653,33 @@ class TaskEditPageState extends ConsumerState<TaskEditPage> {
   }
 
   Future<void> _addNewReminder(BuildContext context) async {
-    var selectedDate = await showDialog<DateTime>(
+    final now = DateTime.now();
+    final todayStart = DateTime(now.year, now.month, now.day);
+    final selectedDate = await showDatePicker(
       context: context,
-      builder: (_) => DatePickerDialog(
-        initialDate: DateTime.now(),
-        firstDate: DateTime.now(),
-        lastDate: DateTime(2100),
-        initialCalendarMode: DatePickerMode.day,
-      ),
+      initialDate: now,
+      firstDate: todayStart,
+      lastDate: DateTime(2100),
     );
+    if (selectedDate == null || !mounted) return;
 
-    if (selectedDate != null && context.mounted) {
-      var selectedTime = await showDialog<TimeOfDay>(
-        context: context,
-        builder: (_) =>
-            TimePickerDialog(initialTime: TimeOfDay.fromDateTime(selectedDate)),
+    final selectedTime = await showTimePicker(
+      context: context,
+      initialTime: TimeOfDay.fromDateTime(DateTime.now()),
+    );
+    if (selectedTime == null || !mounted) return;
+
+    setState(() {
+      _reminderDates?.add(
+        TaskReminder(
+          selectedDate.copyWith(
+            hour: selectedTime.hour,
+            minute: selectedTime.minute,
+          ),
+        ),
       );
-
-      if (selectedTime != null) {
-        setState(() {
-          _reminderDates?.add(
-            TaskReminder(
-              selectedDate.copyWith(
-                hour: selectedTime.hour,
-                minute: selectedTime.minute,
-              ),
-            ),
-          );
-
-          _checkChanged();
-        });
-      }
-    }
+    });
+    _checkChanged();
   }
 
   void _onColorEdit() {
@@ -745,21 +746,25 @@ class TaskEditPageState extends ConsumerState<TaskEditPage> {
           widget.task.endDate != _endDate ||
           widget.task.repeatAfter != repeatAfter ||
           widget.task.priority != _priority ||
-          widget.task.reminderDates != _reminderDates ||
-          widget.task.labels != _labels ||
+          !listEquals(widget.task.reminderDates, _reminderDates) ||
+          !listEquals(widget.task.labels, _labels) ||
           widget.task.color != _color;
     });
   }
 
   Future<void> _saveTask(BuildContext context) async {
+    if (_startDate != null && _endDate != null && _endDate!.isBefore(_startDate!)) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(AppLocalizations.of(context).endDateBeforeStartDate)),
+      );
+      return;
+    }
+
     setState(() {
       _isLoading = true;
     });
 
     try {
-      // Removes all reminders with no value set.
-      _reminderDates?.removeWhere((d) => d.reminder == DateTime(0));
-
       final updatedTask =
           widget.task.copyWith(
               title: _title,

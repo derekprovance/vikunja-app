@@ -13,6 +13,7 @@
   "yes": "Yes",
   "no": "No",
   "close": "Close",
+  "clear": "Clear",
   "reset": "Reset",
   "retry": "Retry",
   "loading": "Loading...",
@@ -252,5 +253,6 @@
   "versionDialogUsed": "Your server version: {versionString}",
   "@versionDialogUsed": {
     "placeholders": { "versionString": { "type": "String" } }
-  }
+  },
+  "endDateBeforeStartDate": "End date must not be before start date"
 }

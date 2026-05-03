@@ -44,19 +44,20 @@ Map<_TaskSection, List<Task>> _groupTasks(List<Task> tasks) {
     if (!task.hasDueDate) {
       grouped[_TaskSection.noDueDate]!.add(task);
     } else {
-      final dueDate = DateTime(
-        task.dueDate!.year,
-        task.dueDate!.month,
-        task.dueDate!.day,
+      final localDue = task.dueDate!.toLocal();
+      final dueDateOnly = DateTime(
+        localDue.year,
+        localDue.month,
+        localDue.day,
       );
-      if (dueDate.isBefore(todayStart)) {
+      if (localDue.isBefore(now)) {
         grouped[_TaskSection.overdue]!.add(task);
-      } else if (dueDate == todayStart) {
+      } else if (dueDateOnly == todayStart) {
         grouped[_TaskSection.today]!.add(task);
-      } else if (dueDate == tomorrowStart) {
+      } else if (dueDateOnly == tomorrowStart) {
         grouped[_TaskSection.tomorrow]!.add(task);
-      } else if (!dueDate.isBefore(dayAfterTomorrowStart) &&
-          dueDate.isBefore(weekEnd)) {
+      } else if (!dueDateOnly.isBefore(dayAfterTomorrowStart) &&
+          dueDateOnly.isBefore(weekEnd)) {
         grouped[_TaskSection.thisWeek]!.add(task);
       } else {
         grouped[_TaskSection.later]!.add(task);
