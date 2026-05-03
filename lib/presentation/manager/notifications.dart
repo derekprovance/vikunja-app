@@ -15,12 +15,13 @@ import 'package:vikunja_app/domain/repositories/task_repository.dart';
 import 'package:vikunja_app/presentation/manager/widget_controller.dart';
 
 const _actionDonePortName = 'action_done_port_name';
+const _actionDoneId = 'action_done';
 
 @pragma('vm:entry-point')
 Future<void> notificationTapBackground(
   NotificationResponse notificationResponse,
 ) async {
-  if (notificationResponse.actionId == "action_done") {
+  if (notificationResponse.actionId == _actionDoneId) {
     var id = notificationResponse.id;
 
     if (id != null) {
@@ -74,28 +75,26 @@ class NotificationHandler {
   var androidSpecificsDueDate = AndroidNotificationDetails(
     "Vikunja1",
     "Due Date Notifications",
-    channelDescription: "description",
+    channelDescription: "Notifies you when a task's due date is approaching",
     icon: 'vikunja_notification_logo',
     importance: Importance.high,
     actions: <AndroidNotificationAction>[
-      AndroidNotificationAction('action_dcd one', 'Done'),
+      AndroidNotificationAction(_actionDoneId, 'Done'),
     ],
   );
   var androidSpecificsReminders = AndroidNotificationDetails(
     "Vikunja2",
     "Reminder Notifications",
-    channelDescription: "description",
+    channelDescription: "Notifies you at times you set as task reminders",
     icon: 'vikunja_notification_logo',
     importance: Importance.high,
     actions: <AndroidNotificationAction>[
-      AndroidNotificationAction('action_done', 'Done'),
+      AndroidNotificationAction(_actionDoneId, 'Done'),
     ],
   );
   late DarwinNotificationDetails iOSSpecifics;
   late NotificationDetails platformChannelSpecificsDueDate;
   late NotificationDetails platformChannelSpecificsReminders;
-
-  NotificationHandler();
 
   Future<void> initNotifications() async {
     iOSSpecifics = DarwinNotificationDetails(
@@ -170,6 +169,7 @@ class NotificationHandler {
     DateTime scheduledTime,
     String currentTimeZone,
     NotificationDetails platformChannelSpecifics,
+    AndroidScheduleMode scheduleMode,
   ) async {
     tz.TZDateTime time = tz.TZDateTime.from(
       scheduledTime,
@@ -189,7 +189,7 @@ class NotificationHandler {
       body: description,
       scheduledDate: time,
       notificationDetails: platformChannelSpecifics,
-      androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
+      androidScheduleMode: scheduleMode,
       payload: id.toString(),
     );
   }
@@ -211,6 +211,18 @@ class NotificationHandler {
         ?.requestPermissions(alert: true, badge: true, sound: true);
   }
 
+  Future<AndroidScheduleMode> _scheduleMode() async {
+    final androidPlugin = notificationsPlugin
+        .resolvePlatformSpecificImplementation<
+          AndroidFlutterLocalNotificationsPlugin
+        >();
+    final canExact =
+        await androidPlugin?.canScheduleExactNotifications() ?? false;
+    return canExact
+        ? AndroidScheduleMode.exactAllowWhileIdle
+        : AndroidScheduleMode.inexact;
+  }
+
   Future<void> scheduleDueNotifications(TaskRepository taskService) async {
     var taskResponse = await taskService.getByFilterString(
       "done=false && (due_date > now || reminders > now)",
@@ -221,6 +233,7 @@ class NotificationHandler {
 
     if (taskResponse.isSuccessful) {
       await notificationsPlugin.cancelAll();
+      final scheduleMode = await _scheduleMode();
       for (final task in taskResponse.toSuccess().body) {
         if (task.done) continue;
         final localTimeZone =
@@ -234,6 +247,7 @@ class NotificationHandler {
             reminder.reminder,
             localTimeZone,
             platformChannelSpecificsReminders,
+            scheduleMode,
           );
         }
         if (task.hasDueDate) {
@@ -245,6 +259,7 @@ class NotificationHandler {
             task.dueDate!,
             localTimeZone,
             platformChannelSpecificsDueDate,
+            scheduleMode,
           );
         }
       }

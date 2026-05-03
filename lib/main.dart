@@ -57,7 +57,7 @@ void main() async {
 
   var notifDenies = await Permission.notification.isDenied;
   if (notifDenies) {
-    Permission.notification.request();
+    await Permission.notification.request();
   }
 
   try {

@@ -2,6 +2,7 @@ import 'dart:developer' as developer;
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:timezone/data/latest_all.dart' as tz;
@@ -242,6 +243,29 @@ class HomePageState extends ConsumerState<HomePage> {
 
       ref.read(notificationProvider.notifier).set(notificationHandler);
       _notificationHandler = notificationHandler;
+
+      _requestExactAlarmsPermission();
+    }
+  }
+
+  void _requestExactAlarmsPermission() {
+    try {
+      final androidPlugin = FlutterLocalNotificationsPlugin()
+          .resolvePlatformSpecificImplementation<
+            AndroidFlutterLocalNotificationsPlugin
+          >();
+      androidPlugin
+          ?.canScheduleExactNotifications()
+          .then((canExact) {
+            if (canExact == false) {
+              androidPlugin.requestExactAlarmsPermission();
+            }
+          })
+          .catchError((e) {
+            developer.log('Exact alarms permission request failed: $e');
+          });
+    } catch (e) {
+      developer.log('Failed to request exact alarms permission: $e');
     }
   }
 
