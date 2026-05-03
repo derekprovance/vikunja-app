@@ -199,22 +199,6 @@ class _TaskDetailPageState extends ConsumerState<TaskDetailPage> {
       );
     }
 
-    // Description — only if non-empty (trim to catch whitespace-only values)
-    if (_task.description.trim().isNotEmpty) {
-      widgets.add(
-        Padding(
-          padding: const EdgeInsets.only(bottom: 4),
-          child: Text(l10n.description, style: theme.textTheme.labelLarge),
-        ),
-      );
-      widgets.add(
-        Padding(
-          padding: const EdgeInsets.only(bottom: 16, left: 4),
-          child: HtmlWidget(_task.description),
-        ),
-      );
-    }
-
     // Metadata card — only rendered if at least one field has a value
     final metadataRows = _buildMetadataRows(l10n);
     if (metadataRows.isNotEmpty) {
@@ -286,6 +270,22 @@ class _TaskDetailPageState extends ConsumerState<TaskDetailPage> {
         TaskAttachmentSection(attachments: _task.attachments, taskId: _task.id),
       );
       widgets.add(const SizedBox(height: 8));
+    }
+
+    // Description — only if non-empty
+    if (stripHtml(_task.description).isNotEmpty) {
+      widgets.add(
+        Padding(
+          padding: const EdgeInsets.only(bottom: 4),
+          child: Text(l10n.description, style: theme.textTheme.labelLarge),
+        ),
+      );
+      widgets.add(
+        Padding(
+          padding: const EdgeInsets.only(bottom: 16, left: 4),
+          child: HtmlWidget(_task.description),
+        ),
+      );
     }
 
     // Info section at the bottom

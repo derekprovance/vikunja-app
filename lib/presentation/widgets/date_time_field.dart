@@ -101,7 +101,9 @@ class _VikunjaDateTimeFieldState extends State<VikunjaDateTimeField> {
                   Text(
                     _value != null ? _value!.formatShort() : '—',
                     style: textTheme.bodyMedium?.copyWith(
-                      color: _value != null ? colors.onSurface : colors.onSurfaceVariant,
+                      color: _value != null
+                          ? colors.onSurface
+                          : colors.onSurfaceVariant,
                     ),
                   ),
                 ],

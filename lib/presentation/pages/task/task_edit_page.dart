@@ -446,7 +446,10 @@ class TaskEditPageState extends ConsumerState<TaskEditPage> {
         children: <Widget>[
           Padding(
             padding: const EdgeInsets.only(right: 15, left: 2),
-            child: Icon(Icons.label, color: Theme.of(context).colorScheme.onSurfaceVariant),
+            child: Icon(
+              Icons.label,
+              color: Theme.of(context).colorScheme.onSurfaceVariant,
+            ),
           ),
           SizedBox(
             width:
@@ -500,14 +503,15 @@ class TaskEditPageState extends ConsumerState<TaskEditPage> {
         children: <Widget>[
           Padding(
             padding: const EdgeInsets.only(right: 15, left: 2),
-            child: Icon(Icons.palette, color: theme.colorScheme.onSurfaceVariant),
+            child: Icon(
+              Icons.palette,
+              color: theme.colorScheme.onSurfaceVariant,
+            ),
           ),
           FilledButton.tonal(
             style: (_color == null || _color == Colors.black)
                 ? null
-                : FilledButton.styleFrom(
-                    backgroundColor: _color,
-                  ),
+                : FilledButton.styleFrom(backgroundColor: _color),
             onPressed: _onColorEdit,
             child: Text(
               AppLocalizations.of(context).setColor,
@@ -753,9 +757,13 @@ class TaskEditPageState extends ConsumerState<TaskEditPage> {
   }
 
   Future<void> _saveTask(BuildContext context) async {
-    if (_startDate != null && _endDate != null && _endDate!.isBefore(_startDate!)) {
+    if (_startDate != null &&
+        _endDate != null &&
+        _endDate!.isBefore(_startDate!)) {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(AppLocalizations.of(context).endDateBeforeStartDate)),
+        SnackBar(
+          content: Text(AppLocalizations.of(context).endDateBeforeStartDate),
+        ),
       );
       return;
     }
