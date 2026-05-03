@@ -85,9 +85,7 @@ android {
 
     buildTypes {
         release {
-        }
-        debug {
-            //signingConfig signingConfigs.debug
+            // Signing is provided per-flavor (see productFlavors above).
         }
     }
     lint {

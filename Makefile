@@ -12,10 +12,10 @@ test:
 	$(FLUTTER) test
 
 .PHONY: build-all
-build-all: build-release build-debug build-profile
+build-all: build-unsigned-release build-debug build-profile
 
-.PHONY: build-release
-build-release:
+.PHONY: build-unsigned-release
+build-unsigned-release:
 	$(FLUTTER) build apk --release --build-number=$(VERSION) --flavor unsigned
 
 .PHONY: build-debug
