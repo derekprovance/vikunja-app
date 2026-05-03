@@ -65,6 +65,15 @@ Map<_TaskSection, List<Task>> _groupTasks(List<Task> tasks) {
     }
   }
 
+  // Sort within each section
+  for (final section in _TaskSection.values) {
+    if (section == _TaskSection.noDueDate) {
+      grouped[section]!.sort((a, b) => b.created.compareTo(a.created));
+    } else {
+      grouped[section]!.sort((a, b) => a.dueDate!.compareTo(b.dueDate!));
+    }
+  }
+
   return grouped;
 }
 
