@@ -62,23 +62,17 @@ android {
         }
     }
 
+    flavorDimensions "deploy"
+
     productFlavors {
         unsigned {
+            dimension "deploy"
             signingConfig signingConfigs.debug
             applicationIdSuffix ".unsigned"
         }
         production {
+            dimension "deploy"
             signingConfig signingConfigs.release
-        }
-    }
-
-    flavorDimensions "deploy"
-
-    android.applicationVariants.all { variant ->
-        if (variant.flavorName == "fdroid") {
-            variant.outputs.all { output ->
-                output.outputFileName = "app-fdroid-release.apk"
-            }
         }
     }
 

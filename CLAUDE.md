@@ -17,11 +17,13 @@ make format  # Format code before committing
 ```
 
 ### Build & Run
-- **Debug APK**: `make build-debug` (builds with unsigned flavor)
-- **Release APK**: `make build-release` (builds with main flavor, requires signing)
-- **Profile APK**: `make build-profile` (for performance profiling)
+- **Debug APK**: `make build-debug` (unsigned flavor, debug mode)
+- **Release APK**: `make build-unsigned-release` (unsigned flavor, minified/optimized, debug-signed — for local testing)
+- **Profile APK**: `make build-profile` (unsigned flavor, for performance profiling)
 - **iOS build**: `make build-ios` (no code signing, for development)
 - **All builds**: `make build-all`
+
+> Production Play Store builds use the `production` flavor and are handled by CI/Fastlane (requires `key.properties`).
 
 ### Testing
 ```bash

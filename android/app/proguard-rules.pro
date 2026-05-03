@@ -32,3 +32,7 @@
 # home_widget / Glance — widget receiver and update classes
 -keep class es.antonborri.home_widget.** { *; }
 -dontwarn es.antonborri.home_widget.**
+
+# flutter_secure_storage — uses reflection for EncryptedSharedPreferences (OAuth tokens)
+-keep class com.it_nomads.fluttersecurestorage.** { *; }
+-dontwarn com.it_nomads.fluttersecurestorage.**
