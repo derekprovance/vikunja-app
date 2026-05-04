@@ -26,74 +26,16 @@ import 'package:vikunja_app/presentation/widgets/task/task_list_item.dart';
 import 'package:vikunja_app/presentation/widgets/task/task_section_header.dart';
 import 'package:vikunja_app/presentation/pages/task/task_detail_page.dart';
 import 'package:vikunja_app/presentation/pages/task/task_page_result.dart';
+import 'package:vikunja_app/presentation/pages/task/task_list_grouping.dart';
 
-enum _TaskSection { overdue, today, tomorrow, thisWeek, later, noDueDate }
-
-extension on _TaskSection {
-  String get storageKey => switch (this) {
-    _TaskSection.overdue => 'overdue',
-    _TaskSection.today => 'today',
-    _TaskSection.tomorrow => 'tomorrow',
-    _TaskSection.thisWeek => 'this_week',
-    _TaskSection.later => 'later',
-    _TaskSection.noDueDate => 'no_due_date',
-  };
-}
-
-// Pure testable functions
-Map<_TaskSection, List<Task>> _groupTasks(List<Task> tasks) {
-  final now = DateTime.now();
-  final todayStart = DateTime(now.year, now.month, now.day);
-  final tomorrowStart = todayStart.add(const Duration(days: 1));
-  final dayAfterTomorrowStart = todayStart.add(const Duration(days: 2));
-  final weekEnd = todayStart.add(const Duration(days: 7));
-
-  final grouped = <_TaskSection, List<Task>>{};
-  for (final section in _TaskSection.values) {
-    grouped[section] = [];
-  }
-
-  for (final task in tasks) {
-    if (!task.hasDueDate) {
-      grouped[_TaskSection.noDueDate]!.add(task);
-    } else {
-      final localDue = task.dueDate!.toLocal();
-      final dueDateOnly = DateTime(localDue.year, localDue.month, localDue.day);
-      if (localDue.isBefore(now)) {
-        grouped[_TaskSection.overdue]!.add(task);
-      } else if (dueDateOnly == todayStart) {
-        grouped[_TaskSection.today]!.add(task);
-      } else if (dueDateOnly == tomorrowStart) {
-        grouped[_TaskSection.tomorrow]!.add(task);
-      } else if (!dueDateOnly.isBefore(dayAfterTomorrowStart) &&
-          dueDateOnly.isBefore(weekEnd)) {
-        grouped[_TaskSection.thisWeek]!.add(task);
-      } else {
-        grouped[_TaskSection.later]!.add(task);
-      }
-    }
-  }
-
-  // Sort within each section
-  for (final section in _TaskSection.values) {
-    if (section == _TaskSection.noDueDate) {
-      grouped[section]!.sort((a, b) => b.created.compareTo(a.created));
-    } else {
-      grouped[section]!.sort((a, b) => a.dueDate!.compareTo(b.dueDate!));
-    }
-  }
-
-  return grouped;
-}
-
-String _getSectionTitle(AppLocalizations l10n, _TaskSection section) {
+String _getSectionTitle(AppLocalizations l10n, TaskSection section) {
   return switch (section) {
-    _TaskSection.overdue => l10n.overdue,
-    _TaskSection.today => l10n.today,
-    _TaskSection.tomorrow => l10n.tomorrow,
-    _TaskSection.thisWeek => l10n.thisWeek,
-    _TaskSection.later => l10n.later,
-    _TaskSection.noDueDate => l10n.noDueDate,
+    TaskSection.overdue => l10n.overdue,
+    TaskSection.today => l10n.today,
+    TaskSection.tomorrow => l10n.tomorrow,
+    TaskSection.thisWeek => l10n.thisWeek,
+    TaskSection.later => l10n.later,
+    TaskSection.noDueDate => l10n.noDueDate,
   };
 }
 
@@ -366,7 +308,7 @@ class _TaskListPageState extends ConsumerState<TaskListPage> {
       return EmptyView(Icons.list, AppLocalizations.of(context).noTasks);
     }
 
-    final groupedTasks = _groupTasks(model.tasks);
+    final groupedTasks = groupTasks(model.tasks);
     final l10n = AppLocalizations.of(context);
     final collapsedSectionsAsync =
         ref.watch(taskSectionCollapsedControllerProvider);
@@ -378,7 +320,7 @@ class _TaskListPageState extends ConsumerState<TaskListPage> {
     );
     final slivers = <Widget>[];
 
-    for (final section in _TaskSection.values) {
+    for (final section in TaskSection.values) {
       final tasks = groupedTasks[section] ?? [];
       if (tasks.isEmpty) continue;
 
