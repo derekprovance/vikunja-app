@@ -169,4 +169,23 @@ class SettingsDatasource {
   Future<void> setLocaleOverride(String? localeCode) async {
     await _storage.write(key: "locale_override", value: localeCode);
   }
+
+  Future<Set<String>> getCollapsedTaskSections() async {
+    final raw = await _storage.read(key: "task_list_collapsed_sections");
+    if (raw == null) return {};
+    try {
+      final decoded = jsonDecode(raw);
+      if (decoded is! List) return {};
+      return decoded.whereType<String>().toSet();
+    } catch (_) {
+      return {};
+    }
+  }
+
+  Future<void> setCollapsedTaskSections(Set<String> sections) async {
+    await _storage.write(
+      key: "task_list_collapsed_sections",
+      value: jsonEncode(sections.toList()),
+    );
+  }
 }

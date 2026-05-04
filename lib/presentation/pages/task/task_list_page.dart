@@ -14,6 +14,7 @@ import 'package:vikunja_app/presentation/manager/notifications.dart';
 import 'package:vikunja_app/presentation/manager/project_controller.dart';
 import 'package:vikunja_app/presentation/manager/projects_controller.dart';
 import 'package:vikunja_app/presentation/manager/task_page_controller.dart';
+import 'package:vikunja_app/presentation/manager/task_section_collapsed_controller.dart';
 import 'package:vikunja_app/presentation/pages/error_widget.dart';
 import 'package:vikunja_app/presentation/pages/loading_widget.dart';
 import 'package:vikunja_app/presentation/pages/project/project_edit.dart';
@@ -24,8 +25,20 @@ import 'package:vikunja_app/presentation/widgets/task/add_task_dialog.dart';
 import 'package:vikunja_app/presentation/widgets/task/task_list_item.dart';
 import 'package:vikunja_app/presentation/widgets/task/task_section_header.dart';
 import 'package:vikunja_app/presentation/pages/task/task_detail_page.dart';
+import 'package:vikunja_app/presentation/pages/task/task_page_result.dart';
 
 enum _TaskSection { overdue, today, tomorrow, thisWeek, later, noDueDate }
+
+extension on _TaskSection {
+  String get storageKey => switch (this) {
+    _TaskSection.overdue => 'overdue',
+    _TaskSection.today => 'today',
+    _TaskSection.tomorrow => 'tomorrow',
+    _TaskSection.thisWeek => 'this_week',
+    _TaskSection.later => 'later',
+    _TaskSection.noDueDate => 'no_due_date',
+  };
+}
 
 // Pure testable functions
 Map<_TaskSection, List<Task>> _groupTasks(List<Task> tasks) {
@@ -355,23 +368,45 @@ class _TaskListPageState extends ConsumerState<TaskListPage> {
 
     final groupedTasks = _groupTasks(model.tasks);
     final l10n = AppLocalizations.of(context);
+    final collapsedSectionsAsync =
+        ref.watch(taskSectionCollapsedControllerProvider);
+
+    final collapsedSections = collapsedSectionsAsync.when(
+      data: (sections) => sections,
+      loading: () => const <String>{},
+      error: (error, stackTrace) => const <String>{},
+    );
     final slivers = <Widget>[];
 
     for (final section in _TaskSection.values) {
       final tasks = groupedTasks[section] ?? [];
       if (tasks.isEmpty) continue;
 
+      final isCollapsed = collapsedSections.contains(section.storageKey);
       final sectionTitle = _getSectionTitle(l10n, section);
-      slivers.add(TaskSectionHeader(title: sectionTitle, count: tasks.length));
-
       slivers.add(
-        SliverList(
-          delegate: SliverChildBuilderDelegate(
-            (ctx, i) => _createListItem(ctx, tasks[i]),
-            childCount: tasks.length,
-          ),
+        TaskSectionHeader(
+          key: ValueKey('header_${section.storageKey}'),
+          title: sectionTitle,
+          count: tasks.length,
+          isCollapsed: isCollapsed,
+          onTap: () => ref
+              .read(taskSectionCollapsedControllerProvider.notifier)
+              .toggle(section.storageKey),
         ),
       );
+
+      if (!isCollapsed) {
+        slivers.add(
+          SliverList(
+            key: ValueKey('list_${section.storageKey}'),
+            delegate: SliverChildBuilderDelegate(
+              (ctx, i) => _createListItem(ctx, tasks[i]),
+              childCount: tasks.length,
+            ),
+          ),
+        );
+      }
     }
 
     if (model.isLoadingNextPage) {
@@ -502,11 +537,11 @@ class _TaskListPageState extends ConsumerState<TaskListPage> {
       key: Key(task.id.toString()),
       task: task,
       onTap: () async {
-        final result = await Navigator.push<Task?>(
+        final result = await Navigator.push<TaskPageResult>(
           context,
           MaterialPageRoute(builder: (_) => TaskDetailPage(task: task)),
         );
-        if (result != null && result.done) {
+        if (result != null) {
           ref.read(taskPageControllerProvider.notifier).reload();
         }
       },
@@ -731,9 +766,10 @@ class _ProjectPickerSheet extends ConsumerWidget {
 
     return ListTile(
       contentPadding: EdgeInsets.only(left: 16 + (depth * 16.0), right: 16),
-      leading: project.views.isNotEmpty
-          ? project.views.first.icon
-          : const Icon(Icons.folder_outlined),
+      leading: Icon(
+        project.id < 0 ? Icons.filter_alt_outlined : Icons.folder_outlined,
+        color: Theme.of(context).colorScheme.onSurface,
+      ),
       title: Text(project.title, overflow: TextOverflow.ellipsis),
       trailing: isSelected
           ? Icon(Icons.check, color: Theme.of(context).colorScheme.primary)

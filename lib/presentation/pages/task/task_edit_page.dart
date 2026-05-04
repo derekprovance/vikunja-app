@@ -18,6 +18,7 @@ import 'package:vikunja_app/domain/entities/task.dart';
 import 'package:vikunja_app/domain/entities/task_reminder.dart';
 import 'package:vikunja_app/l10n/gen/app_localizations.dart';
 import 'package:vikunja_app/presentation/manager/task_page_controller.dart';
+import 'package:vikunja_app/presentation/pages/task/task_page_result.dart';
 import 'package:vikunja_app/presentation/pages/task/edit_description.dart';
 import 'package:vikunja_app/presentation/widgets/date_time_field.dart';
 import 'package:vikunja_app/presentation/widgets/label_widget.dart';
@@ -146,8 +147,14 @@ class TaskEditPageState extends ConsumerState<TaskEditPage> {
 
             if (context.mounted) {
               if (success) {
+                final messenger = ScaffoldMessenger.of(context);
                 Navigator.of(context).pop();
-                Navigator.of(context).pop(widget.task);
+                Navigator.of(context).pop(const TaskDeleted());
+                messenger.showSnackBar(
+                  SnackBar(
+                    content: Text(AppLocalizations.of(context).taskDeleteSuccess),
+                  ),
+                );
               } else {
                 ScaffoldMessenger.of(context).showSnackBar(
                   SnackBar(
@@ -809,7 +816,7 @@ class TaskEditPageState extends ConsumerState<TaskEditPage> {
       if (context.mounted) {
         if (saveSuccess) {
           if (ModalRoute.of(context)?.isCurrent == true) {
-            Navigator.of(context).pop(updatedTask);
+            Navigator.of(context).pop(TaskEdited(updatedTask));
           }
 
           ScaffoldMessenger.of(context).showSnackBar(

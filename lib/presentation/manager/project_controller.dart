@@ -236,8 +236,17 @@ class ProjectController extends _$ProjectController with PaginationMixin<Task> {
     if (response.isSuccessful) {
       var value = state.value;
       if (value != null) {
-        var tasks = value.tasks;
-        tasks.add(response.toSuccess().body);
+        final views = value.project.views;
+        final isListView = views.isNotEmpty &&
+            value.viewIndex < views.length &&
+            views[value.viewIndex].viewKind == ViewKind.list;
+
+        if (isListView) {
+          reload();
+          return true;
+        }
+
+        final tasks = [...value.tasks, response.toSuccess().body];
         state = AsyncData(value.copyWith(tasks: tasks));
 
         return true;

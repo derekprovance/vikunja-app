@@ -10,6 +10,7 @@ import 'package:vikunja_app/core/utils/repeat_after_parse.dart';
 import 'package:vikunja_app/domain/entities/task.dart';
 import 'package:vikunja_app/l10n/gen/app_localizations.dart';
 import 'package:vikunja_app/presentation/pages/task/task_edit_page.dart';
+import 'package:vikunja_app/presentation/pages/task/task_page_result.dart';
 import 'package:vikunja_app/presentation/widgets/label_widget.dart';
 import 'package:vikunja_app/presentation/widgets/task/task_attachment_preview.dart';
 import 'package:vikunja_app/presentation/widgets/task/task_comments.dart';
@@ -35,13 +36,15 @@ class _TaskDetailPageState extends ConsumerState<TaskDetailPage> {
   }
 
   Future<void> _openEdit() async {
-    final editedTask = await Navigator.push<Task?>(
+    final result = await Navigator.push<TaskPageResult>(
       context,
       MaterialPageRoute(builder: (_) => TaskEditPage(task: _task)),
     );
-    if (editedTask != null && mounted) {
+    if (result is TaskDeleted && mounted) {
+      Navigator.pop(context, const TaskDeleted());
+    } else if (result is TaskEdited && mounted) {
       setState(() {
-        _task = editedTask;
+        _task = result.task;
         _modified = true;
       });
     }
@@ -149,7 +152,7 @@ class _TaskDetailPageState extends ConsumerState<TaskDetailPage> {
     return PopScope(
       canPop: !_modified,
       onPopInvokedWithResult: (didPop, result) {
-        if (!didPop) Navigator.pop(context, _task);
+        if (!didPop) Navigator.pop(context, TaskEdited(_task));
       },
       child: Scaffold(
         appBar: AppBar(

@@ -56,4 +56,8 @@ abstract class SettingsRepository {
   // Locale override (null -> system default)
   Future<String?> getLocaleOverride();
   Future<void> setLocaleOverride(String? localeCode);
+
+  // Task list collapsed sections
+  Future<Set<String>> getCollapsedTaskSections();
+  Future<void> setCollapsedTaskSections(Set<String> sections);
 }

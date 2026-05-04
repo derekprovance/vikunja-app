@@ -106,7 +106,7 @@ class ProjectListPage extends ConsumerWidget {
                   children: [
                     Row(
                       children: [
-                        _buildLeadingIcon(project),
+                        _buildLeadingIcon(context, project),
                         const SizedBox(width: 16),
                         Expanded(
                           child: Text(
@@ -132,7 +132,7 @@ class ProjectListPage extends ConsumerWidget {
             )
           else
             VikunjaExpansionTile(
-              leading: _buildLeadingIcon(project),
+              leading: _buildLeadingIcon(context, project),
               title: _buildExpandedTitle(
                 context,
                 project,
@@ -158,9 +158,12 @@ class ProjectListPage extends ConsumerWidget {
     );
   }
 
-  static Widget _buildLeadingIcon(Project project) {
-    if (project.views.isNotEmpty) {
-      return Icon(project.views.first.iconData);
+  static Widget _buildLeadingIcon(BuildContext context, Project project) {
+    if (project.id < 0) {
+      return Icon(
+        Icons.filter_alt_outlined,
+        color: Theme.of(context).colorScheme.onSurface,
+      );
     }
     return const Icon(Icons.folder_outlined);
   }

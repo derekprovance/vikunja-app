@@ -146,4 +146,14 @@ class SettingsRepositoryImpl implements SettingsRepository {
   Future<void> setLocaleOverride(String? localeCode) {
     return _datasource.setLocaleOverride(localeCode);
   }
+
+  @override
+  Future<Set<String>> getCollapsedTaskSections() {
+    return _datasource.getCollapsedTaskSections();
+  }
+
+  @override
+  Future<void> setCollapsedTaskSections(Set<String> sections) {
+    return _datasource.setCollapsedTaskSections(sections);
+  }
 }

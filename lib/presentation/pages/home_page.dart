@@ -44,7 +44,7 @@ class HomePageState extends ConsumerState<HomePage> {
       label: AppLocalizations.of(context).homeTab,
     ),
     NavigationDestination(
-      icon: Icon(Icons.list),
+      icon: Icon(Icons.folder_open),
       label: AppLocalizations.of(context).projectsTab,
     ),
     NavigationDestination(

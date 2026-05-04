@@ -50,7 +50,7 @@ final class ProjectControllerProvider
   }
 }
 
-String _$projectControllerHash() => r'2ae4088dfc5ed100c9509c2b6955c51f6f921ed9';
+String _$projectControllerHash() => r'f5981bbfffcfb05a1fed953b7c992c310c4780dc';
 
 final class ProjectControllerFamily extends $Family
     with

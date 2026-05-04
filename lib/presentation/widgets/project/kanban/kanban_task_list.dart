@@ -8,6 +8,7 @@ import 'package:vikunja_app/domain/entities/project.dart';
 import 'package:vikunja_app/domain/entities/task.dart';
 import 'package:vikunja_app/presentation/manager/project_controller.dart';
 import 'package:vikunja_app/presentation/pages/task/task_edit_page.dart';
+import 'package:vikunja_app/presentation/pages/task/task_page_result.dart';
 import 'package:vikunja_app/presentation/widgets/project/kanban/kanban_task_item.dart';
 import 'package:vikunja_app/presentation/widgets/project/kanban/kanban_widget.dart';
 import 'package:vikunja_app/presentation/widgets/project/kanban/task_drag_target.dart';
@@ -241,12 +242,12 @@ class _TaskListState extends ConsumerState<TaskList> {
   }
 
   void _navigateToTask(BuildContext context, List<Task> tasks, int i) async {
-    var editedTask = await Navigator.push<Task?>(
+    final result = await Navigator.push<TaskPageResult>(
       context,
       MaterialPageRoute(builder: (context) => TaskEditPage(task: tasks[i])),
     );
 
-    if (editedTask != null) {
+    if (result != null) {
       ref.read(projectControllerProvider(widget.project).notifier).reload();
     }
   }

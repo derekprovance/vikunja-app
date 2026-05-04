@@ -150,6 +150,7 @@
   "selectDefaultProject": "Please select a default project in the settings",
   "editTaskTitle": "Edit Task",
   "taskDeleteError": "Error deleting the task!",
+  "taskDeleteSuccess": "Task deleted",
   "taskSaveError": "Error saving the task!",
   "taskUpdatedSuccess": "The task was updated successfully!",
   "editDescriptionTitle": "Edit Description",
@@ -254,5 +255,11 @@
   "@versionDialogUsed": {
     "placeholders": { "versionString": { "type": "String" } }
   },
-  "endDateBeforeStartDate": "End date must not be before start date"
+  "endDateBeforeStartDate": "End date must not be before start date",
+  "taskSectionItemCount": "{count, plural, one{1 item} other{{count} items}}",
+  "@taskSectionItemCount": {
+    "placeholders": {
+      "count": { "type": "int" }
+    }
+  }
 }

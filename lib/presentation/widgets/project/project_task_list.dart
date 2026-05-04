@@ -9,6 +9,7 @@ import 'package:vikunja_app/presentation/manager/project_controller.dart';
 import 'package:vikunja_app/presentation/pages/error_widget.dart';
 import 'package:vikunja_app/presentation/pages/loading_widget.dart';
 import 'package:vikunja_app/presentation/pages/task/task_list_page.dart';
+import 'package:vikunja_app/presentation/pages/task/task_page_result.dart';
 import 'package:vikunja_app/presentation/widgets/empty_view.dart';
 import 'package:vikunja_app/presentation/widgets/task/task_list_item.dart';
 import 'package:vikunja_app/presentation/widgets/task/task_section_header.dart';
@@ -191,11 +192,11 @@ class ProjectTaskList extends ConsumerWidget {
   }
 
   Future<void> _openTaskDetail(WidgetRef ref, Task task) async {
-    final editedTask = await Navigator.push<Task?>(
+    final result = await Navigator.push<TaskPageResult>(
       ref.context,
       MaterialPageRoute(builder: (_) => TaskDetailPage(task: task)),
     );
-    if (editedTask != null) {
+    if (result != null) {
       ref.read(projectControllerProvider(project).notifier).reload();
     }
   }
