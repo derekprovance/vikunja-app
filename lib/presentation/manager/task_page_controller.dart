@@ -161,14 +161,13 @@ class TaskPageController extends _$TaskPageController
         .read(settingsRepositoryProvider)
         .setLandingPageOnlyDueDateTasks(newValue);
 
-    reload();
+    if (ref.mounted) reload();
   }
 
   Future<bool> addTask(int projectId, Task task) async {
     var response = await ref.read(taskRepositoryProvider).add(projectId, task);
     if (response.isSuccessful) {
-      reload();
-
+      if (ref.mounted) reload();
       return true;
     }
 
@@ -177,11 +176,11 @@ class TaskPageController extends _$TaskPageController
 
   Future<bool> deleteTask(int id) async {
     var response = await ref.read(taskRepositoryProvider).delete(id);
+    if (!ref.mounted) return response.isSuccessful;
     if (response.isSuccessful) {
       var value = state.value;
       if (value != null) {
-        var tasks = value.tasks;
-        tasks.removeWhere((element) => element.id == id);
+        final tasks = value.tasks.where((t) => t.id != id).toList();
         state = AsyncData(value.copyWith(tasks: tasks));
       }
 
@@ -194,8 +193,7 @@ class TaskPageController extends _$TaskPageController
   Future<bool> updateTask(Task task) async {
     var response = await ref.read(taskRepositoryProvider).update(task);
     if (response.isSuccessful) {
-      reload();
-
+      if (ref.mounted) reload();
       return true;
     }
 
@@ -205,11 +203,11 @@ class TaskPageController extends _$TaskPageController
   Future<bool> markAsDone(Task task) async {
     task.done = true;
     var response = await ref.read(taskRepositoryProvider).update(task);
+    if (!ref.mounted) return response.isSuccessful;
     if (response.isSuccessful) {
       var value = state.value;
       if (value != null) {
-        var tasks = value.tasks;
-        tasks.removeWhere((element) => element.id == task.id);
+        final tasks = value.tasks.where((t) => t.id != task.id).toList();
         state = AsyncData(value.copyWith(tasks: tasks));
       }
 
