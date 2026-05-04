@@ -33,12 +33,6 @@ class FakeSettingsRepository implements SettingsRepository {
   Future<String?> getServer() async => null;
 
   @override
-  Future<bool> getSentryDialogShown() async => false;
-
-  @override
-  Future<bool> getSentryEnabled() async => false;
-
-  @override
   Future<FlutterThemeMode> getThemeMode() async => FlutterThemeMode.system;
 
   @override
@@ -79,12 +73,6 @@ class FakeSettingsRepository implements SettingsRepository {
 
   @override
   Future<void> setRefreshInterval(int minutes) async {}
-
-  @override
-  Future<void> setSentryDialogShown(bool value) async {}
-
-  @override
-  Future<void> setSentryEnabled(bool value) async {}
 
   @override
   Future<void> setThemeMode(FlutterThemeMode newMode) async {}

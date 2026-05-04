@@ -156,9 +156,7 @@ class _TaskDetailPageState extends ConsumerState<TaskDetailPage> {
       },
       child: Scaffold(
         appBar: AppBar(
-          title: Text(
-            _task.identifier.isNotEmpty ? _task.identifier : l10n.taskDetail,
-          ),
+          title: Text(l10n.taskDetail),
         ),
         body: ListView(
           padding: const EdgeInsets.fromLTRB(16, 16, 16, 80),

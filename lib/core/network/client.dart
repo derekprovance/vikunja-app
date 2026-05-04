@@ -9,7 +9,6 @@ import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:http/http.dart' as http;
 import 'package:http/io_client.dart' as io_client;
 import 'package:logging/logging.dart';
-import 'package:sentry_flutter/sentry_flutter.dart';
 import 'package:vikunja_app/core/network/response.dart';
 import 'package:vikunja_app/core/network/token_lock.dart';
 import 'package:vikunja_app/core/utils/constants.dart';
@@ -298,10 +297,8 @@ class Client {
     return _handleResponse(response, mapper);
   }
 
+  // Centralized exception handler — kept as a single point for future error reporting or logging integrations
   ExceptionResponse<T> _handleException<T>(Object e, StackTrace s) {
-    if (e is! FormatException && e is! http.ClientException) {
-      Sentry.captureException(e, stackTrace: s);
-    }
     return ExceptionResponse<T>(e, s);
   }
 }

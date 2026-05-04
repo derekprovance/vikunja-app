@@ -17,10 +17,6 @@
     public <init>(android.content.Context, androidx.work.WorkerParameters);
 }
 
-# Sentry — uses reflection for stack trace symbolication
--keep class io.sentry.** { *; }
--dontwarn io.sentry.**
-
 # flutter_local_notifications — notification callback receivers
 -keep class com.dexterous.** { *; }
 -dontwarn com.dexterous.**
