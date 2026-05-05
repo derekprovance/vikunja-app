@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:vikunja_app/core/utils/color_extensions.dart';
 import 'package:vikunja_app/core/utils/misc.dart';
 import 'package:vikunja_app/domain/entities/task.dart';
 import 'package:vikunja_app/presentation/widgets/due_date_card.dart';
@@ -13,7 +14,12 @@ class TaskListItem extends StatefulWidget {
   final VoidCallback onTap;
   final Function(bool value) onCheckedChanged;
 
-  const TaskListItem({super.key, required this.task, required this.onTap, required this.onCheckedChanged});
+  const TaskListItem({
+    super.key,
+    required this.task,
+    required this.onTap,
+    required this.onCheckedChanged,
+  });
 
   @override
   TaskListItemState createState() => TaskListItemState();
@@ -55,8 +61,11 @@ class TaskListItemState extends State<TaskListItem> {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     // Compute once to avoid repeated DateTime.now() calls across helper methods.
-    final isOverdue = widget.task.hasDueDate && widget.task.dueDate!.isBefore(DateTime.now());
-    final hasRepeat = widget.task.repeatAfter != null && widget.task.repeatAfter!.inSeconds > 0;
+    final isOverdue =
+        widget.task.hasDueDate && widget.task.dueDate!.isBefore(DateTime.now());
+    final hasRepeat =
+        widget.task.repeatAfter != null &&
+        widget.task.repeatAfter!.inSeconds > 0;
     final hasTopBadges = isOverdue || hasRepeat;
 
     // Badge straddle geometry: badge height ≈ 22px, half = 11px, card vertical margin = 4px.
@@ -72,25 +81,36 @@ class TaskListItemState extends State<TaskListItem> {
         opacity: _isCompleting ? 0.6 : 1.0,
         duration: const Duration(milliseconds: 300),
         child: Padding(
-          padding: hasTopBadges ? const EdgeInsets.only(top: badgeTopPadding) : EdgeInsets.zero,
+          padding: hasTopBadges
+              ? const EdgeInsets.only(top: badgeTopPadding)
+              : EdgeInsets.zero,
           child: Stack(
             clipBehavior: Clip.none,
             children: [
               Card(
                 margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
                 elevation: 1,
                 child: Stack(
                   fit: StackFit.loose,
                   children: [
                     Padding(
-                      padding: EdgeInsets.fromLTRB(12.0, hasTopBadges ? 19.0 : 10.0, 12.0, 10.0),
+                      padding: EdgeInsets.fromLTRB(
+                        12.0,
+                        hasTopBadges ? 19.0 : 10.0,
+                        12.0,
+                        10.0,
+                      ),
                       child: Row(
                         crossAxisAlignment: CrossAxisAlignment.center,
                         children: [
                           _buildAvatar(theme),
                           const SizedBox(width: 12),
-                          Expanded(child: _buildContent(context, isOverdue: isOverdue)),
+                          Expanded(
+                            child: _buildContent(context, isOverdue: isOverdue),
+                          ),
                           const SizedBox(width: 12),
                           _buildActions(theme),
                         ],
@@ -117,7 +137,11 @@ class TaskListItemState extends State<TaskListItem> {
                 Positioned(
                   top: badgeTopPosition,
                   left: badgeLeftPosition,
-                  child: _buildTopBadges(context, isOverdue: isOverdue, hasRepeat: hasRepeat),
+                  child: _buildTopBadges(
+                    context,
+                    isOverdue: isOverdue,
+                    hasRepeat: hasRepeat,
+                  ),
                 ),
             ],
           ),
@@ -126,7 +150,11 @@ class TaskListItemState extends State<TaskListItem> {
     );
   }
 
-  Widget _buildTopBadges(BuildContext context, {required bool isOverdue, required bool hasRepeat}) {
+  Widget _buildTopBadges(
+    BuildContext context, {
+    required bool isOverdue,
+    required bool hasRepeat,
+  }) {
     final theme = Theme.of(context);
     final badges = <Widget>[];
 
@@ -134,29 +162,42 @@ class TaskListItemState extends State<TaskListItem> {
       final difference = widget.task.dueDate!.difference(DateTime.now());
       badges.add(
         Container(
-          decoration: BoxDecoration(color: theme.colorScheme.errorContainer, borderRadius: BorderRadius.circular(12)),
+          decoration: BoxDecoration(
+            color: theme.colorScheme.errorContainer,
+            borderRadius: BorderRadius.circular(12),
+          ),
           padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
           child: Text(
             'Overdue ${durationToHumanReadable(difference)}',
-            style: theme.textTheme.labelSmall?.copyWith(color: theme.colorScheme.error, fontWeight: FontWeight.w500),
+            style: theme.textTheme.labelSmall?.copyWith(
+              color: theme.colorScheme.error,
+              fontWeight: FontWeight.w500,
+            ),
           ),
         ),
       );
     }
 
     if (hasRepeat) {
-      final interval = durationToHumanReadable(widget.task.repeatAfter!).replaceFirst('in ', '');
+      final interval = durationToHumanReadable(
+        widget.task.repeatAfter!,
+      ).replaceFirst('in ', '');
       badges.add(
         Container(
           decoration: BoxDecoration(
             color: theme.colorScheme.surfaceContainerHighest,
             borderRadius: BorderRadius.circular(12),
-            border: Border.all(color: theme.colorScheme.outlineVariant, width: 1),
+            border: Border.all(
+              color: theme.colorScheme.outlineVariant,
+              width: 1,
+            ),
           ),
           padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
           child: Text(
             'Every $interval',
-            style: theme.textTheme.labelSmall?.copyWith(fontWeight: FontWeight.w500),
+            style: theme.textTheme.labelSmall?.copyWith(
+              fontWeight: FontWeight.w500,
+            ),
           ),
         ),
       );
@@ -167,7 +208,9 @@ class TaskListItemState extends State<TaskListItem> {
 
   Widget _buildAvatar(ThemeData theme) {
     final source = widget.task.project?.title ?? widget.task.title;
-    final initial = source.isEmpty ? '?' : source.characters.first.toUpperCase();
+    final initial = source.isEmpty
+        ? '?'
+        : source.characters.first.toUpperCase();
     final bgColor = widget.task.color ?? theme.colorScheme.primaryContainer;
 
     return CircleAvatar(
@@ -175,23 +218,23 @@ class TaskListItemState extends State<TaskListItem> {
       backgroundColor: bgColor,
       child: Text(
         initial,
-        style: theme.textTheme.labelLarge?.copyWith(color: _contrastColor(bgColor), fontWeight: FontWeight.bold),
+        style: theme.textTheme.labelLarge?.copyWith(
+          color: bgColor.contrastTextColor,
+          fontWeight: FontWeight.bold,
+        ),
       ),
     );
   }
 
-  // WCAG AA threshold: luminance of ~0.179 gives 4.5:1 contrast ratio against white/black.
-  Color _contrastColor(Color background) {
-    return background.computeLuminance() <= 0.179 ? Colors.white : Colors.black;
-  }
-
   Widget _buildContent(BuildContext context, {required bool isOverdue}) {
     final theme = Theme.of(context);
-    final hasPriority = widget.task.priority != null && widget.task.priority != 0;
+    final hasPriority =
+        widget.task.priority != null && widget.task.priority != 0;
     final hasUpcomingDueDate = widget.task.hasDueDate && !isOverdue;
     final hasLabels = widget.task.labels.isNotEmpty;
     final hasAttachments = widget.task.attachments.isNotEmpty;
-    final hasMetadata = hasPriority || hasUpcomingDueDate || hasLabels || hasAttachments;
+    final hasMetadata =
+        hasPriority || hasUpcomingDueDate || hasLabels || hasAttachments;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -199,10 +242,18 @@ class TaskListItemState extends State<TaskListItem> {
         AnimatedDefaultTextStyle(
           duration: const Duration(milliseconds: 200),
           style: theme.textTheme.bodyLarge!.copyWith(
-            decoration: _isDone ? TextDecoration.lineThrough : TextDecoration.none,
-            color: _isDone ? theme.colorScheme.onSurface.withValues(alpha: 0.45) : theme.colorScheme.onSurface,
+            decoration: _isDone
+                ? TextDecoration.lineThrough
+                : TextDecoration.none,
+            color: _isDone
+                ? theme.colorScheme.onSurface.withValues(alpha: 0.45)
+                : theme.colorScheme.onSurface,
           ),
-          child: Text(widget.task.title, maxLines: 2, overflow: TextOverflow.ellipsis),
+          child: Text(
+            widget.task.title,
+            maxLines: 2,
+            overflow: TextOverflow.ellipsis,
+          ),
         ),
         if (hasMetadata) ...[
           const SizedBox(height: 6),
@@ -212,11 +263,17 @@ class TaskListItemState extends State<TaskListItem> {
             children: [
               if (hasPriority) PriorityBatch(widget.task.priority!),
               if (hasUpcomingDueDate) DueDateCard(widget.task.dueDate!),
-              ...widget.task.labels.map((label) => LabelWidget(label: label, compact: true)),
+              ...widget.task.labels.map(
+                (label) => LabelWidget(label: label, compact: true),
+              ),
               if (hasAttachments)
                 Padding(
                   padding: const EdgeInsets.only(top: 2),
-                  child: Icon(Icons.attachment, size: 14, color: theme.colorScheme.onSurfaceVariant),
+                  child: Icon(
+                    Icons.attachment,
+                    size: 14,
+                    color: theme.colorScheme.onSurfaceVariant,
+                  ),
                 ),
             ],
           ),
@@ -242,7 +299,12 @@ class TaskListItemState extends State<TaskListItem> {
         child: AnimatedSwitcher(
           duration: const Duration(milliseconds: 200),
           child: _isDone
-              ? Icon(Icons.check, key: const ValueKey('check'), color: theme.colorScheme.onPrimary, size: 20)
+              ? Icon(
+                  Icons.check,
+                  key: const ValueKey('check'),
+                  color: theme.colorScheme.onPrimary,
+                  size: 20,
+                )
               : const SizedBox.shrink(key: ValueKey('empty')),
         ),
       ),

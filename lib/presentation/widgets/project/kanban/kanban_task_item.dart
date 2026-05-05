@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:vikunja_app/core/utils/color_extensions.dart';
 import 'package:vikunja_app/domain/entities/task.dart';
 import 'package:vikunja_app/presentation/widgets/due_date_card.dart';
 import 'package:vikunja_app/presentation/widgets/label_widget.dart';
@@ -90,13 +91,9 @@ class TaskTile extends StatelessWidget {
   }
 
   Color _getTextColor(BuildContext context) =>
-      _getBackgroundColor(context).computeLuminance() > 0.5
-      ? Colors.black
-      : Colors.white;
+      _getBackgroundColor(context).contrastTextColor;
 
   Color _getBackgroundColor(BuildContext context) {
-    return task.color != Colors.black && task.color != null
-        ? task.color!
-        : Theme.of(context).colorScheme.surface;
+    return task.effectiveColor ?? Theme.of(context).colorScheme.surface;
   }
 }
