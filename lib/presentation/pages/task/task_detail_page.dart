@@ -156,6 +156,8 @@ class _TaskDetailPageState extends ConsumerState<TaskDetailPage> {
       },
       child: Scaffold(
         appBar: AppBar(
+          backgroundColor: _task.color,
+          foregroundColor: _task.color != null ? _task.textColor : null,
           title: Text(l10n.taskDetail),
         ),
         body: ListView(
