@@ -92,6 +92,7 @@ class TaskListItemState extends State<TaskListItem> {
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(12),
                 ),
+                clipBehavior: Clip.antiAlias,
                 elevation: 1,
                 child: Stack(
                   fit: StackFit.loose,
@@ -122,12 +123,20 @@ class TaskListItemState extends State<TaskListItem> {
                         bottom: 0,
                         left: 0,
                         width: 4.0,
-                        child: ClipRRect(
-                          borderRadius: const BorderRadius.only(
-                            topLeft: Radius.circular(12),
-                            bottomLeft: Radius.circular(12),
-                          ),
-                          child: Container(color: widget.task.color),
+                        child: Container(color: widget.task.color),
+                      ),
+                    if (!_isDone &&
+                        widget.task.percentDone != null &&
+                        widget.task.percentDone! > 0)
+                      Positioned(
+                        bottom: 0,
+                        left: 0,
+                        right: 0,
+                        height: 3,
+                        child: LinearProgressIndicator(
+                          value: widget.task.percentDone,
+                          minHeight: 3,
+                          backgroundColor: Colors.transparent,
                         ),
                       ),
                   ],

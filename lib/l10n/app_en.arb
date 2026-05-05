@@ -6,6 +6,7 @@
   "edit": "Edit",
   "save": "Save",
   "done": "Done",
+  "progress": "Progress",
   "taskDetail": "Task Detail",
   "@taskDetail": {
     "description": "AppBar title shown on the task detail screen when the task has no identifier (e.g. #VIK-42) to display."

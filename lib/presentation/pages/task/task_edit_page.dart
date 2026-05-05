@@ -46,6 +46,7 @@ class TaskEditPageState extends ConsumerState<TaskEditPage> {
   List<TaskReminder>? _reminderDates;
   List<Label>? _labels;
   Color? _color;
+  double _percentDone = 0.0;
 
   // we use this to find the label object after a user taps on the suggestion, because the typeahead only uses strings, not full objects.
   List<Label>? _suggestedLabels;
@@ -69,6 +70,8 @@ class TaskEditPageState extends ConsumerState<TaskEditPage> {
     _dueDate = widget.task.dueDate;
     _startDate = widget.task.startDate;
     _endDate = widget.task.endDate;
+
+    _percentDone = widget.task.percentDone ?? 0.0;
 
     _repeatAfterValue = getRepeatAfterValueFromDuration(
       widget.task.repeatAfter,
@@ -187,6 +190,7 @@ class TaskEditPageState extends ConsumerState<TaskEditPage> {
           _buildReminderList(),
           _buildAddReminderButton(context),
           _buildPriority(),
+          _buildProgressSlider(),
           _buildAddLabel(context),
           _buildLabelList(),
           _buildColor(),
@@ -443,6 +447,57 @@ class TaskEditPageState extends ConsumerState<TaskEditPage> {
           ].map((String value) {
             return DropdownMenuItem(value: value, child: Text(value));
           }).toList(),
+    );
+  }
+
+  Widget _buildProgressSlider() {
+    final percentText = '${(_percentDone * 100).toInt()}%';
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 8.0),
+      child: Row(
+        children: [
+          Padding(
+            padding: const EdgeInsets.only(right: 15, left: 2),
+            child: Icon(
+              Icons.percent,
+              color: Theme.of(context).colorScheme.onSurfaceVariant,
+            ),
+          ),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  AppLocalizations.of(context).progress,
+                  style: Theme.of(context).textTheme.labelMedium?.copyWith(
+                    color: Theme.of(context).hintColor,
+                  ),
+                ),
+                Slider(
+                  value: _percentDone,
+                  min: 0.0,
+                  max: 1.0,
+                  divisions: 10,
+                  label: percentText,
+                  onChanged: (double value) {
+                    setState(() {
+                      _percentDone = value;
+                    });
+                    _checkChanged();
+                  },
+                ),
+              ],
+            ),
+          ),
+          SizedBox(
+            width: 40,
+            child: Text(
+              percentText,
+              textAlign: TextAlign.end,
+            ),
+          ),
+        ],
+      ),
     );
   }
 
@@ -759,7 +814,8 @@ class TaskEditPageState extends ConsumerState<TaskEditPage> {
           widget.task.priority != _priority ||
           !listEquals(widget.task.reminderDates, _reminderDates) ||
           !listEquals(widget.task.labels, _labels) ||
-          widget.task.color != _color;
+          widget.task.color != _color ||
+          ((widget.task.percentDone ?? 0.0) - _percentDone).abs() > 1e-9;
     });
   }
 
@@ -788,6 +844,9 @@ class TaskEditPageState extends ConsumerState<TaskEditPage> {
               priority: _priority,
               labels: _labels,
               repeatAfter: _repeatAfterUnit.getDuration(_repeatAfterValue),
+              percentDone: widget.task.percentDone == null && _percentDone == 0.0
+                  ? null
+                  : _percentDone,
             )
             //Need to be here as they can be null
             ..dueDate = _dueDate

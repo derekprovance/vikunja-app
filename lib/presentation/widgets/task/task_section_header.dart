@@ -17,7 +17,8 @@ class TaskSectionHeader extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final primary = Theme.of(context).colorScheme.primary;
+    final theme = Theme.of(context);
+    final primary = theme.colorScheme.primary;
     final isRtl = Directionality.of(context) == TextDirection.rtl;
     final caretIcon = isCollapsed
         ? (isRtl ? Icons.keyboard_arrow_left : Icons.keyboard_arrow_right)
@@ -39,19 +40,16 @@ class TaskSectionHeader extends StatelessWidget {
             ],
             Text(
               title.toUpperCase(),
-              style: Theme.of(context).textTheme.labelLarge?.copyWith(
+              style: theme.textTheme.labelLarge?.copyWith(
                 color: primary,
               ),
             ),
             const Spacer(),
-            Badge(
-              label: Text(
-                count.toString(),
-                style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                  color: Theme.of(context).colorScheme.onPrimary,
-                ),
+            Text(
+              count.toString(),
+              style: theme.textTheme.labelMedium?.copyWith(
+                color: theme.colorScheme.onSurfaceVariant,
               ),
-              backgroundColor: primary,
             ),
           ],
         ),
