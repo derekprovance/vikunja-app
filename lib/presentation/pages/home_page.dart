@@ -36,7 +36,9 @@ class HomePageState extends ConsumerState<HomePage> {
   Widget? drawerItem;
   NotificationHandler? _notificationHandler;
 
-  List<Widget> widgets = [TaskListPage(), ProjectListPage(), SettingsPage()];
+  final GlobalKey<TaskListPageState> _taskListKey =
+      GlobalKey<TaskListPageState>();
+  late List<Widget> widgets;
 
   List<NavigationDestination> navbarItems(BuildContext context) => [
     NavigationDestination(
@@ -56,6 +58,12 @@ class HomePageState extends ConsumerState<HomePage> {
   @override
   void initState() {
     super.initState();
+
+    widgets = [
+      TaskListPage(key: _taskListKey),
+      ProjectListPage(),
+      SettingsPage(),
+    ];
 
     Future.delayed(Duration.zero, () {
       scheduleIntent();
@@ -99,6 +107,9 @@ class HomePageState extends ConsumerState<HomePage> {
             setState(() {
               _selectedDrawerIndex = index;
             });
+            if (index == 0) {
+              _taskListKey.currentState?.resetToAllTasks();
+            }
           },
         ),
       ),

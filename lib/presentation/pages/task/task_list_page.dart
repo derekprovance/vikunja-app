@@ -20,6 +20,7 @@ import 'package:vikunja_app/presentation/pages/loading_widget.dart';
 import 'package:vikunja_app/presentation/pages/project/project_edit.dart';
 import 'package:vikunja_app/presentation/widgets/empty_view.dart';
 import 'package:vikunja_app/presentation/widgets/project/kanban/kanban_widget.dart';
+import 'package:vikunja_app/presentation/widgets/project/project_picker_sheet.dart';
 import 'package:vikunja_app/presentation/widgets/project/project_task_list.dart';
 import 'package:vikunja_app/presentation/widgets/task/add_task_dialog.dart';
 import 'package:vikunja_app/presentation/widgets/task/task_list_item.dart';
@@ -45,10 +46,10 @@ class TaskListPage extends ConsumerStatefulWidget {
   const TaskListPage({super.key, this.initialProject});
 
   @override
-  ConsumerState<TaskListPage> createState() => _TaskListPageState();
+  ConsumerState<TaskListPage> createState() => TaskListPageState();
 }
 
-class _TaskListPageState extends ConsumerState<TaskListPage> {
+class TaskListPageState extends ConsumerState<TaskListPage> {
   int? _selectedProjectId;
   int _viewIndex = 0;
   NotificationHandler? _notificationHandler;
@@ -76,6 +77,14 @@ class _TaskListPageState extends ConsumerState<TaskListPage> {
     if (project != null) {
       ref.read(projectControllerProvider(project).notifier).reload();
     }
+  }
+
+  void resetToAllTasks() {
+    if (_selectedProjectId == null) return;
+    setState(() {
+      _selectedProjectId = null;
+      _viewIndex = 0;
+    });
   }
 
   bool get _isLocked => widget.initialProject != null;
@@ -287,7 +296,7 @@ class _TaskListPageState extends ConsumerState<TaskListPage> {
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
-      builder: (_) => _ProjectPickerSheet(
+      builder: (_) => ProjectPickerSheet(
         currentProjectId: _selectedProjectId,
         onSelected: (projectId) {
           setState(() {
@@ -310,8 +319,9 @@ class _TaskListPageState extends ConsumerState<TaskListPage> {
 
     final groupedTasks = groupTasks(model.tasks);
     final l10n = AppLocalizations.of(context);
-    final collapsedSectionsAsync =
-        ref.watch(taskSectionCollapsedControllerProvider);
+    final collapsedSectionsAsync = ref.watch(
+      taskSectionCollapsedControllerProvider,
+    );
 
     final collapsedSections = collapsedSectionsAsync.when(
       data: (sections) => sections,
@@ -592,135 +602,6 @@ class _TaskListPageState extends ConsumerState<TaskListPage> {
               : AppLocalizations.of(context).taskAddError,
         ),
       ),
-    );
-  }
-}
-
-// ============================================================================
-// Project Picker Bottom Sheet
-// ============================================================================
-
-class _ProjectPickerSheet extends ConsumerWidget {
-  final int? currentProjectId;
-  final void Function(int?) onSelected;
-
-  const _ProjectPickerSheet({
-    required this.currentProjectId,
-    required this.onSelected,
-  });
-
-  @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final l10n = AppLocalizations.of(context);
-    final projectsAsync = ref.watch(projectsControllerProvider);
-
-    return DraggableScrollableSheet(
-      expand: false,
-      initialChildSize: 0.5,
-      minChildSize: 0.3,
-      maxChildSize: 0.9,
-      builder: (context, scrollController) {
-        return Column(
-          children: [
-            // Drag handle
-            Padding(
-              padding: const EdgeInsets.symmetric(vertical: 12),
-              child: Container(
-                width: 40,
-                height: 4,
-                decoration: BoxDecoration(
-                  color: Theme.of(
-                    context,
-                  ).colorScheme.onSurfaceVariant.withValues(alpha: 0.4),
-                  borderRadius: BorderRadius.circular(2),
-                ),
-              ),
-            ),
-            // Title
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-              child: Text(
-                l10n.selectProject,
-                style: Theme.of(context).textTheme.titleMedium,
-              ),
-            ),
-            const Divider(height: 1),
-            // "All Tasks" always visible
-            ListTile(
-              leading: const Icon(Icons.home_outlined),
-              title: Text(l10n.allTasks),
-              trailing: currentProjectId == null
-                  ? Icon(
-                      Icons.check,
-                      color: Theme.of(context).colorScheme.primary,
-                    )
-                  : null,
-              selected: currentProjectId == null,
-              onTap: () {
-                Navigator.pop(context);
-                onSelected(null);
-              },
-            ),
-            const Divider(height: 1),
-            // Projects list
-            Expanded(
-              child: projectsAsync.when(
-                data: (model) => ListView(
-                  controller: scrollController,
-                  children: model.projects
-                      .expand((p) => _flattenProject(context, p, depth: 0))
-                      .toList(),
-                ),
-                loading: () => const Center(child: LoadingWidget()),
-                error: (err, _) => Center(
-                  child: Padding(
-                    padding: const EdgeInsets.all(16),
-                    child: VikunjaErrorWidget(error: err),
-                  ),
-                ),
-              ),
-            ),
-          ],
-        );
-      },
-    );
-  }
-
-  List<Widget> _flattenProject(
-    BuildContext context,
-    Project project, {
-    required int depth,
-  }) {
-    return [
-      _buildProjectItem(context, project, depth: depth),
-      ...project.subprojects.expand(
-        (sub) => _flattenProject(context, sub, depth: depth + 1),
-      ),
-    ];
-  }
-
-  Widget _buildProjectItem(
-    BuildContext context,
-    Project project, {
-    required int depth,
-  }) {
-    final isSelected = project.id == currentProjectId;
-
-    return ListTile(
-      contentPadding: EdgeInsets.only(left: 16 + (depth * 16.0), right: 16),
-      leading: Icon(
-        project.id < 0 ? Icons.filter_alt_outlined : Icons.folder_outlined,
-        color: Theme.of(context).colorScheme.onSurface,
-      ),
-      title: Text(project.title, overflow: TextOverflow.ellipsis),
-      trailing: isSelected
-          ? Icon(Icons.check, color: Theme.of(context).colorScheme.primary)
-          : null,
-      selected: isSelected,
-      onTap: () {
-        Navigator.pop(context);
-        onSelected(project.id);
-      },
     );
   }
 }
