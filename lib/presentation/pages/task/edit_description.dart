@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:appflowy_editor/appflowy_editor.dart';
 import 'package:vikunja_app/l10n/gen/app_localizations.dart';
+import 'package:vikunja_app/presentation/widgets/task/rich_text_editor.dart';
 
 class EditDescription extends StatefulWidget {
   final String? initialText;
@@ -62,52 +63,9 @@ class EditDescriptionState extends State<EditDescription> {
           ),
         ],
       ),
-      body: MobileToolbarV2(
+      body: RichTextEditor(
         editorState: _editorState,
-        toolbarItems: [
-          textDecorationMobileToolbarItemV2,
-          buildTextAndBackgroundColorMobileToolbarItem(),
-          blocksMobileToolbarItem,
-          linkMobileToolbarItem,
-          dividerMobileToolbarItem,
-        ],
-        child: Column(
-          children: [
-            Expanded(
-              child: MobileFloatingToolbar(
-                editorState: _editorState,
-                editorScrollController: _editorScrollController,
-                floatingToolbarHeight: 32,
-                toolbarBuilder: (context, anchor, closeToolbar) {
-                  return AdaptiveTextSelectionToolbar.editable(
-                    clipboardStatus: ClipboardStatus.pasteable,
-                    onCopy: () {
-                      copyCommand.execute(_editorState);
-                      closeToolbar();
-                    },
-                    onCut: () => cutCommand.execute(_editorState),
-                    onPaste: () => pasteCommand.execute(_editorState),
-                    onSelectAll: () => selectAllCommand.execute(_editorState),
-                    onLiveTextInput: null,
-                    onLookUp: null,
-                    onSearchWeb: null,
-                    onShare: null,
-                    anchors: TextSelectionToolbarAnchors(primaryAnchor: anchor),
-                  );
-                },
-                child: AppFlowyEditor(
-                  editorState: _editorState,
-                  editorScrollController: _editorScrollController,
-                  editorStyle: EditorStyle.mobile(
-                    padding: const EdgeInsets.symmetric(horizontal: 24.0),
-                  ),
-                  blockComponentBuilders: standardBlockComponentBuilderMap,
-                  showMagnifier: true,
-                ),
-              ),
-            ),
-          ],
-        ),
+        editorScrollController: _editorScrollController,
       ),
     );
   }

@@ -4,6 +4,7 @@ import 'package:appflowy_editor/appflowy_editor.dart';
 import 'package:vikunja_app/domain/entities/task_comment.dart';
 import 'package:vikunja_app/l10n/gen/app_localizations.dart';
 import 'package:vikunja_app/presentation/manager/task_comments_controller.dart';
+import 'package:vikunja_app/presentation/widgets/task/rich_text_editor.dart';
 
 class CommentEditPage extends ConsumerStatefulWidget {
   final int taskId;
@@ -126,52 +127,9 @@ class _CommentEditPageState extends ConsumerState<CommentEditPage> {
           ),
         ],
       ),
-      body: MobileToolbarV2(
+      body: RichTextEditor(
         editorState: _editorState,
-        toolbarItems: [
-          textDecorationMobileToolbarItemV2,
-          buildTextAndBackgroundColorMobileToolbarItem(),
-          blocksMobileToolbarItem,
-          linkMobileToolbarItem,
-          dividerMobileToolbarItem,
-        ],
-        child: Column(
-          children: [
-            Expanded(
-              child: MobileFloatingToolbar(
-                editorState: _editorState,
-                editorScrollController: _editorScrollController,
-                floatingToolbarHeight: 32,
-                toolbarBuilder: (context, anchor, closeToolbar) {
-                  return AdaptiveTextSelectionToolbar.editable(
-                    clipboardStatus: ClipboardStatus.pasteable,
-                    onCopy: () {
-                      copyCommand.execute(_editorState);
-                      closeToolbar();
-                    },
-                    onCut: () => cutCommand.execute(_editorState),
-                    onPaste: () => pasteCommand.execute(_editorState),
-                    onSelectAll: () => selectAllCommand.execute(_editorState),
-                    onLiveTextInput: null,
-                    onLookUp: null,
-                    onSearchWeb: null,
-                    onShare: null,
-                    anchors: TextSelectionToolbarAnchors(primaryAnchor: anchor),
-                  );
-                },
-                child: AppFlowyEditor(
-                  editorState: _editorState,
-                  editorScrollController: _editorScrollController,
-                  editorStyle: EditorStyle.mobile(
-                    padding: const EdgeInsets.symmetric(horizontal: 24.0),
-                  ),
-                  blockComponentBuilders: standardBlockComponentBuilderMap,
-                  showMagnifier: true,
-                ),
-              ),
-            ),
-          ],
-        ),
+        editorScrollController: _editorScrollController,
       ),
     );
   }
