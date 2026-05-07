@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:html_editor_enhanced/html_editor.dart';
+import 'package:appflowy_editor/appflowy_editor.dart';
 import 'package:vikunja_app/domain/entities/task_comment.dart';
 import 'package:vikunja_app/l10n/gen/app_localizations.dart';
 import 'package:vikunja_app/presentation/manager/task_comments_controller.dart';
@@ -16,20 +16,36 @@ class CommentEditPage extends ConsumerStatefulWidget {
 }
 
 class _CommentEditPageState extends ConsumerState<CommentEditPage> {
-  final HtmlEditorController _controller = HtmlEditorController();
+  late EditorState _editorState;
   bool _isSaving = false;
 
   bool get _isEditMode => widget.comment != null;
+
+  @override
+  void initState() {
+    super.initState();
+    final doc = (widget.comment?.comment.trim().isNotEmpty ?? false)
+        ? AppFlowyEditorHTMLCodec().decode(widget.comment!.comment)
+        : EditorState.blank().document;
+    _editorState = EditorState(document: doc);
+  }
+
+  @override
+  void dispose() {
+    _editorState.dispose();
+    super.dispose();
+  }
 
   Future<void> _save() async {
     if (_isSaving) return;
 
     setState(() => _isSaving = true);
 
-    final text = await _controller.getText();
+    final html = AppFlowyEditorHTMLCodec().encode(_editorState.document);
 
-    // Check if text is empty after getting it
-    if (text.trim().isEmpty) {
+    // Check if text is effectively empty (HTML stripped has no content)
+    final isEffectivelyEmpty = html.replaceAll(RegExp(r'<[^>]+>'), '').trim().isEmpty;
+    if (isEffectivelyEmpty) {
       setState(() => _isSaving = false);
       var buildContext = context;
       if (buildContext.mounted) {
@@ -50,15 +66,15 @@ class _CommentEditPageState extends ConsumerState<CommentEditPage> {
 
     final bool success;
     if (_isEditMode) {
-      success = await controller.updateComment(widget.comment!, text);
+      success = await controller.updateComment(widget.comment!, html);
     } else {
-      success = await controller.addComment(text);
+      success = await controller.addComment(html);
     }
 
     if (!mounted) return;
 
     if (success) {
-      Navigator.pop(context, text);
+      Navigator.pop(context, html);
     } else {
       setState(() => _isSaving = false);
       final l10n = AppLocalizations.of(context);
@@ -91,12 +107,8 @@ class _CommentEditPageState extends ConsumerState<CommentEditPage> {
           ),
         ],
       ),
-      body: HtmlEditor(
-        controller: _controller,
-        htmlEditorOptions: HtmlEditorOptions(
-          hint: l10n.commentInputHint,
-          initialText: widget.comment?.comment,
-        ),
+      body: AppFlowyEditor(
+        editorState: _editorState,
       ),
     );
   }

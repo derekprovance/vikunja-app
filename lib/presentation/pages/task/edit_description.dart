@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:appflowy_editor/appflowy_editor.dart';
 import 'package:vikunja_app/l10n/gen/app_localizations.dart';
-import 'package:html_editor_enhanced/html_editor.dart';
 
 class EditDescription extends StatefulWidget {
   final String? initialText;
@@ -12,7 +12,28 @@ class EditDescription extends StatefulWidget {
 }
 
 class EditDescriptionState extends State<EditDescription> {
-  HtmlEditorController controller = HtmlEditorController();
+  late EditorState _editorState;
+
+  @override
+  void initState() {
+    super.initState();
+    final doc = (widget.initialText?.trim().isNotEmpty ?? false)
+        ? AppFlowyEditorHTMLCodec().decode(widget.initialText!)
+        : EditorState.blank().document;
+    _editorState = EditorState(document: doc);
+  }
+
+  @override
+  void dispose() {
+    _editorState.dispose();
+    super.dispose();
+  }
+
+  void _save() {
+    final html = AppFlowyEditorHTMLCodec().encode(_editorState.document);
+    if (!context.mounted) return;
+    Navigator.pop(context, html);
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -21,21 +42,13 @@ class EditDescriptionState extends State<EditDescription> {
         title: Text(AppLocalizations.of(context).editDescriptionTitle),
         actions: <Widget>[
           IconButton(
-            icon: Icon(Icons.save),
-            onPressed: () async {
-              var txt = await controller.getText();
-              if (!context.mounted) return;
-              Navigator.pop(context, txt);
-            },
+            icon: const Icon(Icons.save),
+            onPressed: _save,
           ),
         ],
       ),
-      body: HtmlEditor(
-        controller: controller,
-        htmlEditorOptions: HtmlEditorOptions(
-          hint: "Your text here...",
-          initialText: widget.initialText,
-        ),
+      body: AppFlowyEditor(
+        editorState: _editorState,
       ),
     );
   }
