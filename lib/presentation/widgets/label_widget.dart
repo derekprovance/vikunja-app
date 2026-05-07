@@ -9,7 +9,12 @@ class LabelWidget extends StatelessWidget {
   /// Falls back to [Chip] when [onDelete] is provided (delete affordance requires chip shape).
   final bool compact;
 
-  const LabelWidget({super.key, required this.label, this.onDelete, this.compact = false});
+  const LabelWidget({
+    super.key,
+    required this.label,
+    this.onDelete,
+    this.compact = false,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -17,14 +22,18 @@ class LabelWidget extends StatelessWidget {
       return Badge(
         padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
         label: Text(label.title),
-        backgroundColor: label.color ?? Theme.of(context).colorScheme.surfaceContainerHighest,
-        textColor: _getTextColor() ?? Theme.of(context).colorScheme.onSurfaceVariant,
+        backgroundColor:
+            label.color ??
+            Theme.of(context).colorScheme.surfaceContainerHighest,
+        textColor:
+            _getTextColor() ?? Theme.of(context).colorScheme.onSurfaceVariant,
       );
     }
     return Chip(
       visualDensity: VisualDensity.compact,
       label: Text(label.title, style: TextStyle(color: _getTextColor())),
-      backgroundColor: label.color ?? Theme.of(context).colorScheme.surfaceBright,
+      backgroundColor:
+          label.color ?? Theme.of(context).colorScheme.surfaceBright,
       iconTheme: IconThemeData(color: _getTextColor()),
       onDeleted: onDelete,
     );
@@ -33,7 +42,9 @@ class LabelWidget extends StatelessWidget {
   // WCAG AA threshold: luminance ≤ 0.179 gives 4.5:1 contrast ratio against white.
   Color? _getTextColor() {
     if (label.color != null) {
-      return label.color!.computeLuminance() <= 0.179 ? Colors.white : Colors.black;
+      return label.color!.computeLuminance() <= 0.179
+          ? Colors.white
+          : Colors.black;
     }
     return null;
   }

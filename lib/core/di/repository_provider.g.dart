@@ -563,3 +563,51 @@ final class TaskCommentRepositoryProvider
 
 String _$taskCommentRepositoryHash() =>
     r'7160d2803bbee1f5f1af9dadc5f74e0834f597ac';
+
+@ProviderFor(taskRelationRepository)
+final taskRelationRepositoryProvider = TaskRelationRepositoryProvider._();
+
+final class TaskRelationRepositoryProvider
+    extends
+        $FunctionalProvider<
+          TaskRelationRepository,
+          TaskRelationRepository,
+          TaskRelationRepository
+        >
+    with $Provider<TaskRelationRepository> {
+  TaskRelationRepositoryProvider._()
+    : super(
+        from: null,
+        argument: null,
+        retry: null,
+        name: r'taskRelationRepositoryProvider',
+        isAutoDispose: true,
+        dependencies: null,
+        $allTransitiveDependencies: null,
+      );
+
+  @override
+  String debugGetCreateSourceHash() => _$taskRelationRepositoryHash();
+
+  @$internal
+  @override
+  $ProviderElement<TaskRelationRepository> $createElement(
+    $ProviderPointer pointer,
+  ) => $ProviderElement(pointer);
+
+  @override
+  TaskRelationRepository create(Ref ref) {
+    return taskRelationRepository(ref);
+  }
+
+  /// {@macro riverpod.override_with_value}
+  Override overrideWithValue(TaskRelationRepository value) {
+    return $ProviderOverride(
+      origin: this,
+      providerOverride: $SyncValueProvider<TaskRelationRepository>(value),
+    );
+  }
+}
+
+String _$taskRelationRepositoryHash() =>
+    r'e3757fc9e8874905747f17d3827592d86f87dfbf';

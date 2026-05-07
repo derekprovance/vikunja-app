@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_spinkit/flutter_spinkit.dart';
 import 'package:vikunja_app/core/utils/calculate_item_position.dart';
@@ -30,7 +31,7 @@ class ProjectTaskList extends ConsumerWidget {
         if (project.subprojects.isNotEmpty) {
           children.add(
             TaskSectionHeader(
-              title: AppLocalizations.of(context).projectSection,
+              title: AppLocalizations.of(context).subProjectSection,
               count: project.subprojects.length,
             ),
           );
@@ -117,6 +118,7 @@ class ProjectTaskList extends ConsumerWidget {
 
   Widget _buildTaskList(WidgetRef ref, List<Task> tasks) {
     return SliverReorderableList(
+      proxyDecorator: (child, index, animation) => _DragProxy(child: child),
       itemBuilder: (context, index) {
         final task = tasks[index];
         return ReorderableDelayedDragStartListener(
@@ -213,5 +215,26 @@ class ProjectTaskList extends ConsumerWidget {
         },
       ),
     );
+  }
+}
+
+class _DragProxy extends StatefulWidget {
+  final Widget child;
+  const _DragProxy({required this.child});
+
+  @override
+  State<_DragProxy> createState() => _DragProxyState();
+}
+
+class _DragProxyState extends State<_DragProxy> {
+  @override
+  void initState() {
+    super.initState();
+    HapticFeedback.mediumImpact();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Transform.scale(scale: 1.04, child: widget.child);
   }
 }

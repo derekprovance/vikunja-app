@@ -33,6 +33,13 @@ class SettingsPageState extends ConsumerState<SettingsPage> {
   final TextEditingController durationTextController = TextEditingController();
 
   Version? newestVersion;
+  late final Future<Map<String, String>> _headersFuture;
+
+  @override
+  void initState() {
+    super.initState();
+    _headersFuture = ref.read(clientProviderProvider).getHeaders();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -53,187 +60,31 @@ class SettingsPageState extends ConsumerState<SettingsPage> {
           durationTextController.text = settings.refreshInterval.toString();
 
           return ListView(
+            padding: const EdgeInsets.symmetric(vertical: 8),
             children: [
-              _buildUserHeader(ref, settings.user, settings.projects, context),
-              Divider(),
-              ListTile(
-                title: Text(l10n.theme),
-                trailing: DropdownButton<FlutterThemeMode>(
-                  items: [
-                    DropdownMenuItem(
-                      value: FlutterThemeMode.system,
-                      child: Text(l10n.system),
-                    ),
-                    DropdownMenuItem(
-                      value: FlutterThemeMode.light,
-                      child: Text(l10n.light),
-                    ),
-                    DropdownMenuItem(
-                      value: FlutterThemeMode.dark,
-                      child: Text(l10n.dark),
-                    ),
-                  ],
-                  value: settings.themeMode,
-                  onChanged: (FlutterThemeMode? value) {
-                    ref
-                        .read(settingsControllerProvider.notifier)
-                        .setThemeMode(value ?? FlutterThemeMode.system);
-                  },
-                ),
+              _buildProfileCard(context, settings.user, settings.projects),
+              const SizedBox(height: 8),
+              _sectionHeader(context, l10n.settingsAppearanceSection),
+              _buildAppearanceCard(
+                context,
+                l10n,
+                settings,
+                isSystemSelected,
+                overrideLocale,
+                isFallback,
+                platformLocale,
+                resolvedLocale,
               ),
-              ListTile(
-                title: Text(l10n.language),
-                subtitle: isFallback
-                    ? Text(
-                        'System language (${platformLocale.languageCode}${platformLocale.countryCode != null ? '-${platformLocale.countryCode}' : ''}) not supported. Using ${languageAutonym(resolvedLocale)}.',
-                        style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                          color: Theme.of(
-                            context,
-                          ).colorScheme.onSurface.withValues(alpha: 0.6),
-                        ),
-                      )
-                    : null,
-                trailing: DropdownButton<Locale?>(
-                  items: [
-                    DropdownMenuItem(
-                      value: null,
-                      child: Text(l10n.systemLanguage),
-                    ),
-                    ...AppLocalizations.supportedLocales.map(
-                      (loc) => DropdownMenuItem(
-                        value: loc,
-                        child: Text(languageAutonym(loc)),
-                      ),
-                    ),
-                  ],
-                  value: overrideLocale,
-                  onChanged: (Locale? value) {
-                    ref.read(localeOverrideProvider.notifier).setLocale(value);
-                  },
-                ),
-              ),
-              SwitchListTile(
-                title: Text(l10n.dynamicColors),
-                value: settings.dynamicColors,
-                onChanged: (bool? value) {
-                  ref
-                      .read(settingsControllerProvider.notifier)
-                      .setDynamicColors(value ?? false);
-                },
-              ),
-              Divider(),
-              CheckboxListTile(
-                title: Text(l10n.ignoreCertificates),
-                value: settings.ignoreCertificates,
-                onChanged: (value) {
-                  ref
-                      .read(settingsControllerProvider.notifier)
-                      .setIgnoreCertificates(value ?? false);
-                },
-              ),
-              Padding(
-                padding: EdgeInsets.symmetric(horizontal: 16),
-                child: Row(
-                  children: [
-                    Flexible(
-                      child: TextField(
-                        inputFormatters: [
-                          FilteringTextInputFormatter.digitsOnly,
-                        ],
-                        keyboardType: TextInputType.number,
-                        controller: durationTextController,
-                        decoration: InputDecoration(
-                          labelText: l10n.backgroundRefreshInterval,
-                          helperText: l10n.noLimitHelper,
-                        ),
-                      ),
-                    ),
-                    TextButton(
-                      onPressed: () {
-                        ref
-                            .read(settingsControllerProvider.notifier)
-                            .setRefreshInterval(
-                              int.tryParse(durationTextController.value.text) ??
-                                  0,
-                            );
-                      },
-                      child: Text(l10n.save),
-                    ),
-                  ],
-                ),
-              ),
-              Divider(),
-              CheckboxListTile(
-                title: Text(l10n.getVersionNotifications),
-                value: settings.versionNotifications,
-                onChanged: (value) {
-                  ref
-                      .read(settingsControllerProvider.notifier)
-                      .setVersionNotifications(value ?? false);
-                },
-              ),
-              TextButton(
-                onPressed: () async {
-                  var notifGranted = await Permission.notification.isGranted;
-                  if (notifGranted) {
-                    ref.read(notificationProvider)?.sendTestNotification();
-                  } else {
-                    var status = await Permission.notification.request();
-                    if (status.isGranted) {
-                      ref.read(notificationProvider)?.sendTestNotification();
-                    } else if (status.isPermanentlyDenied && context.mounted) {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(content: Text(l10n.noNotificationPermission)),
-                      );
-                    }
-                  }
-                },
-                child: Text(l10n.sendTestNotification),
-              ),
-              TextButton(
-                onPressed: () async {
-                  var newestVersion = await ref
-                      .read(versionRepositoryProvider)
-                      .getLatestVersionTag();
-                  if (newestVersion == null && context.mounted) {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(content: Text("Couldn't get latest version!")),
-                    );
-                  } else {
-                    setState(() {
-                      this.newestVersion = newestVersion;
-                    });
-                  }
-                },
-                child: Text(l10n.checkForLatestVersion),
-              ),
-              Text(
-                settings.currentVersion != null
-                    ? l10n.currentVersionPrefix(
-                        settings.currentVersion.toString(),
-                      )
-                    : l10n.currentVersionUnknown,
-              ),
-              Text(
-                newestVersion != null
-                    ? l10n.latestVersionPrefix(newestVersion.toString())
-                    : "",
-              ),
-              Divider(),
-              TextButton(
-                onPressed: () {
-                  ref.read(settingsRepositoryProvider).saveServer(null);
-                  ref.read(settingsRepositoryProvider).saveUserToken(null);
-                  ref.read(settingsRepositoryProvider).saveRefreshToken(null);
-
-                  Navigator.of(context).popUntil((route) => route.isFirst);
-                  Navigator.pushReplacement(
-                    context,
-                    MaterialPageRoute(builder: (buildContext) => LoginPage()),
-                  );
-                },
-                child: Text(l10n.logout),
-              ),
+              const SizedBox(height: 8),
+              _sectionHeader(context, l10n.settingsNetworkSection),
+              _buildNetworkCard(context, l10n, settings),
+              const SizedBox(height: 8),
+              _sectionHeader(context, l10n.settingsNotificationsSection),
+              _buildNotificationsCard(context, l10n, settings),
+              const SizedBox(height: 8),
+              _sectionHeader(context, l10n.settingsAccountSection),
+              _buildAccountCard(context, l10n),
+              const SizedBox(height: 24),
             ],
           );
         },
@@ -246,90 +97,447 @@ class SettingsPageState extends ConsumerState<SettingsPage> {
     );
   }
 
-  Widget _buildUserHeader(
-    WidgetRef ref,
+  Widget _sectionHeader(BuildContext context, String label) {
+    final theme = Theme.of(context);
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(16, 16, 16, 4),
+      child: Text(
+        label,
+        style: theme.textTheme.labelLarge?.copyWith(
+          color: theme.colorScheme.onSurfaceVariant,
+        ),
+      ),
+    );
+  }
+
+  Widget _buildProfileCard(
+    BuildContext context,
     User user,
     List<Project> projects,
-    BuildContext context,
   ) {
-    return Column(
-      children: [
-        UserAccountsDrawerHeader(
-          accountName: Text(
-            user.displayName,
-            style: Theme.of(context).textTheme.titleMedium?.copyWith(
-              color: Theme.of(context).colorScheme.onSecondaryContainer,
-            ),
-          ),
-          accountEmail: Text(
-            user.username,
-            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-              color: Theme.of(context).colorScheme.onSecondaryContainer,
-            ),
-          ),
-          currentAccountPicture: FutureBuilder(
-            future: ref.read(clientProviderProvider).getHeaders(),
-            builder: (context, asyncSnapshot) {
-              if (!asyncSnapshot.hasData ||
-                  asyncSnapshot.data == null ||
-                  user.username.isEmpty) {
-                return const CircleAvatar();
-              }
-              final imageHeaders = Map<String, String>.from(asyncSnapshot.data!)
-                ..remove('Content-Type');
-              return ClipOval(
-                child: SvgPicture.network(
-                  user.avatarUrl(ref.read(clientProviderProvider).apiBase),
-                  headers: imageHeaders,
-                  width: 72,
-                  height: 72,
-                  fit: BoxFit.cover,
-                  placeholderBuilder: (_) => const CircleAvatar(radius: 36),
+    final theme = Theme.of(context);
+    return Card(
+      elevation: 0,
+      margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+      clipBehavior: Clip.antiAlias,
+      child: Column(
+        children: [
+          Padding(
+            padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
+            child: Row(
+              children: [
+                SizedBox(
+                  width: 56,
+                  height: 56,
+                  child: FutureBuilder(
+                    future: _headersFuture,
+                    builder: (context, asyncSnapshot) {
+                      if (!asyncSnapshot.hasData || user.username.isEmpty) {
+                        return const CircleAvatar(radius: 28);
+                      }
+                      final imageHeaders = Map<String, String>.from(
+                        asyncSnapshot.data!,
+                      )..remove('Content-Type');
+                      return ClipOval(
+                        child: SvgPicture.network(
+                          user.avatarUrl(
+                            ref.read(clientProviderProvider).apiBase,
+                          ),
+                          headers: imageHeaders,
+                          width: 56,
+                          height: 56,
+                          fit: BoxFit.cover,
+                          placeholderBuilder: (_) =>
+                              const CircleAvatar(radius: 28),
+                        ),
+                      );
+                    },
+                  ),
                 ),
-              );
-            },
-          ),
-          decoration: BoxDecoration(
-            image: DecorationImage(
-              image: AssetImage("assets/graphics/hypnotize.png"),
-              repeat: ImageRepeat.repeat,
-              colorFilter: ColorFilter.mode(
-                Theme.of(context).colorScheme.secondaryContainer,
-                BlendMode.multiply,
-              ),
+                const SizedBox(width: 16),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        user.displayName,
+                        style: theme.textTheme.titleMedium,
+                      ),
+                      Text(
+                        '@${user.username}',
+                        style: theme.textTheme.bodySmall?.copyWith(
+                          color: theme.colorScheme.onSurfaceVariant,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
             ),
           ),
-        ),
-        ListTile(
-          title: Text(AppLocalizations.of(context).defaultProject),
-          trailing: DropdownButton<int>(
-            items: [
-              DropdownMenuItem(
-                value: 0,
-                child: Text(AppLocalizations.of(context).none),
-              ),
-              ...projects.map(
-                (e) => DropdownMenuItem(value: e.id, child: Text(e.title)),
-              ),
-            ],
-            value:
-                projects.firstWhereOrNull(
-                      (element) =>
-                          element.id == user.settings?.defaultProjectId,
-                    ) !=
-                    null
-                ? user.settings?.defaultProjectId
-                : 0,
-            onChanged: (int? value) {
-              if (value != null && user.settings != null) {
+          _buildDefaultProjectTile(context, user, projects),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildDefaultProjectTile(
+    BuildContext context,
+    User user,
+    List<Project> projects,
+  ) {
+    return ListTile(
+      dense: true,
+      leading: const Icon(Icons.folder_outlined),
+      title: Text(AppLocalizations.of(context).defaultProject),
+      trailing: DropdownButton<int>(
+        items: [
+          DropdownMenuItem(
+            value: 0,
+            child: Text(AppLocalizations.of(context).none),
+          ),
+          ...projects.map(
+            (e) => DropdownMenuItem(value: e.id, child: Text(e.title)),
+          ),
+        ],
+        value:
+            projects.firstWhereOrNull(
+                  (element) => element.id == user.settings?.defaultProjectId,
+                ) !=
+                null
+            ? user.settings?.defaultProjectId
+            : 0,
+        onChanged: (int? value) {
+          if (value != null && user.settings != null) {
+            ref
+                .read(settingsControllerProvider.notifier)
+                .setDefaultProject(value);
+          }
+        },
+      ),
+    );
+  }
+
+  Widget _buildAppearanceCard(
+    BuildContext context,
+    AppLocalizations l10n,
+    dynamic settings,
+    bool isSystemSelected,
+    Locale? overrideLocale,
+    bool isFallback,
+    Locale platformLocale,
+    Locale resolvedLocale,
+  ) {
+    final theme = Theme.of(context);
+    return Card(
+      elevation: 0,
+      margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+      clipBehavior: Clip.antiAlias,
+      child: Column(
+        children: [
+          ListTile(
+            leading: const Icon(Icons.brightness_6_outlined),
+            title: Text(l10n.theme),
+            subtitle: SegmentedButton<FlutterThemeMode>(
+              segments: [
+                ButtonSegment(
+                  value: FlutterThemeMode.system,
+                  label: Text(l10n.system),
+                  icon: const Icon(Icons.brightness_auto_outlined),
+                ),
+                ButtonSegment(
+                  value: FlutterThemeMode.light,
+                  label: Text(l10n.light),
+                  icon: const Icon(Icons.light_mode_outlined),
+                ),
+                ButtonSegment(
+                  value: FlutterThemeMode.dark,
+                  label: Text(l10n.dark),
+                  icon: const Icon(Icons.dark_mode_outlined),
+                ),
+              ],
+              selected: {settings.themeMode},
+              onSelectionChanged: (Set<FlutterThemeMode> selection) {
                 ref
                     .read(settingsControllerProvider.notifier)
-                    .setDefaultProject(value);
+                    .setThemeMode(selection.first);
+              },
+            ),
+          ),
+          ListTile(
+            leading: const Icon(Icons.language_outlined),
+            title: Text(l10n.language),
+            subtitle: isFallback
+                ? Text(
+                    'System language (${platformLocale.languageCode}${platformLocale.countryCode != null ? '-${platformLocale.countryCode}' : ''}) not supported. Using ${languageAutonym(resolvedLocale)}.',
+                    style: theme.textTheme.bodySmall?.copyWith(
+                      color: theme.colorScheme.onSurface.withValues(alpha: 0.6),
+                    ),
+                  )
+                : null,
+            trailing: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  isSystemSelected
+                      ? l10n.systemLanguage
+                      : languageAutonym(overrideLocale!),
+                  style: theme.textTheme.bodyMedium?.copyWith(
+                    color: theme.colorScheme.onSurfaceVariant,
+                  ),
+                ),
+                const Icon(Icons.chevron_right_outlined),
+              ],
+            ),
+            onTap: () => _showLanguagePicker(context, overrideLocale),
+          ),
+          SwitchListTile(
+            secondary: const Icon(Icons.palette_outlined),
+            title: Text(l10n.dynamicColors),
+            value: settings.dynamicColors,
+            onChanged: (bool value) {
+              ref
+                  .read(settingsControllerProvider.notifier)
+                  .setDynamicColors(value);
+            },
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildNetworkCard(
+    BuildContext context,
+    AppLocalizations l10n,
+    dynamic settings,
+  ) {
+    return Card(
+      elevation: 0,
+      margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+      clipBehavior: Clip.antiAlias,
+      child: Column(
+        children: [
+          SwitchListTile(
+            secondary: const Icon(Icons.security_outlined),
+            title: Text(l10n.ignoreCertificates),
+            value: settings.ignoreCertificates,
+            onChanged: (bool value) {
+              ref
+                  .read(settingsControllerProvider.notifier)
+                  .setIgnoreCertificates(value);
+            },
+          ),
+          ListTile(
+            leading: const Icon(Icons.sync_outlined),
+            title: Text(l10n.backgroundRefreshInterval),
+            subtitle: Row(
+              children: [
+                Expanded(
+                  child: TextField(
+                    inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+                    keyboardType: TextInputType.number,
+                    controller: durationTextController,
+                    decoration: InputDecoration(
+                      isDense: true,
+                      helperText: l10n.noLimitHelper,
+                      border: const OutlineInputBorder(),
+                      contentPadding: const EdgeInsets.symmetric(
+                        horizontal: 12,
+                        vertical: 8,
+                      ),
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 8),
+                FilledButton.tonal(
+                  onPressed: () {
+                    ref
+                        .read(settingsControllerProvider.notifier)
+                        .setRefreshInterval(
+                          int.tryParse(durationTextController.value.text) ?? 0,
+                        );
+                  },
+                  child: Text(l10n.save),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildNotificationsCard(
+    BuildContext context,
+    AppLocalizations l10n,
+    dynamic settings,
+  ) {
+    final theme = Theme.of(context);
+    return Card(
+      elevation: 0,
+      margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+      clipBehavior: Clip.antiAlias,
+      child: Column(
+        children: [
+          SwitchListTile(
+            secondary: const Icon(Icons.notifications_outlined),
+            title: Text(l10n.getVersionNotifications),
+            value: settings.versionNotifications,
+            onChanged: (bool value) {
+              ref
+                  .read(settingsControllerProvider.notifier)
+                  .setVersionNotifications(value);
+            },
+          ),
+          ListTile(
+            leading: const Icon(Icons.send_outlined),
+            title: Text(l10n.sendTestNotification),
+            onTap: () async {
+              var notifGranted = await Permission.notification.isGranted;
+              if (notifGranted) {
+                ref.read(notificationProvider)?.sendTestNotification();
+              } else {
+                var status = await Permission.notification.request();
+                if (status.isGranted) {
+                  ref.read(notificationProvider)?.sendTestNotification();
+                } else if (status.isPermanentlyDenied && context.mounted) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(content: Text(l10n.noNotificationPermission)),
+                  );
+                }
               }
             },
           ),
+          const Divider(height: 1, indent: 16, endIndent: 16),
+          ListTile(
+            leading: const Icon(Icons.system_update_outlined),
+            title: Text(l10n.checkForLatestVersion),
+            onTap: () async {
+              var newestVersion = await ref
+                  .read(versionRepositoryProvider)
+                  .getLatestVersionTag();
+              if (newestVersion == null && context.mounted) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(content: Text(AppLocalizations.of(context).versionCheckError)),
+                );
+              } else {
+                setState(() {
+                  this.newestVersion = newestVersion;
+                });
+              }
+            },
+          ),
+          ListTile(
+            leading: const Icon(Icons.info_outlined),
+            title: Text(
+              settings.currentVersion != null
+                  ? l10n.currentVersionPrefix(
+                      settings.currentVersion.toString(),
+                    )
+                  : l10n.currentVersionUnknown,
+            ),
+            subtitle: newestVersion != null
+                ? Text(
+                    l10n.latestVersionPrefix(newestVersion.toString()),
+                    style: theme.textTheme.bodySmall?.copyWith(
+                      color: theme.colorScheme.onSurfaceVariant,
+                    ),
+                  )
+                : null,
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildAccountCard(BuildContext context, AppLocalizations l10n) {
+    final theme = Theme.of(context);
+    return Card(
+      elevation: 0,
+      margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+      clipBehavior: Clip.antiAlias,
+      child: ListTile(
+        leading: Icon(Icons.logout_outlined, color: theme.colorScheme.error),
+        title: Text(
+          l10n.logout,
+          style: theme.textTheme.bodyLarge?.copyWith(
+            color: theme.colorScheme.error,
+          ),
         ),
-      ],
+        onTap: () {
+          ref.read(settingsRepositoryProvider).saveServer(null);
+          ref.read(settingsRepositoryProvider).saveUserToken(null);
+          ref.read(settingsRepositoryProvider).saveRefreshToken(null);
+
+          Navigator.of(context).popUntil((route) => route.isFirst);
+          Navigator.pushReplacement(
+            context,
+            MaterialPageRoute(builder: (buildContext) => LoginPage()),
+          );
+        },
+      ),
+    );
+  }
+
+  void _showLanguagePicker(BuildContext context, Locale? currentLocale) {
+    final l10n = AppLocalizations.of(context);
+    final theme = Theme.of(context);
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      useSafeArea: true,
+      builder: (sheetContext) {
+        return DraggableScrollableSheet(
+          initialChildSize: 0.6,
+          minChildSize: 0.4,
+          maxChildSize: 0.9,
+          expand: false,
+          builder: (_, scrollController) {
+            return Column(
+              children: [
+                Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 12),
+                  child: Text(
+                    l10n.language,
+                    style: theme.textTheme.titleMedium,
+                  ),
+                ),
+                Expanded(
+                  child: ListView(
+                    controller: scrollController,
+                    children: [
+                      RadioListTile<Locale?>(
+                        title: Text(l10n.systemLanguage),
+                        value: null,
+                        groupValue: currentLocale,
+                        onChanged: (_) {
+                          ref
+                              .read(localeOverrideProvider.notifier)
+                              .setLocale(null);
+                          Navigator.pop(sheetContext);
+                        },
+                      ),
+                      ...AppLocalizations.supportedLocales.map(
+                        (loc) => RadioListTile<Locale?>(
+                          title: Text(languageAutonym(loc)),
+                          value: loc,
+                          groupValue: currentLocale,
+                          onChanged: (val) {
+                            ref
+                                .read(localeOverrideProvider.notifier)
+                                .setLocale(val);
+                            Navigator.pop(sheetContext);
+                          },
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            );
+          },
+        );
+      },
     );
   }
 }

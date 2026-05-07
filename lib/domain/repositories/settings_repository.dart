@@ -1,4 +1,5 @@
 import 'package:vikunja_app/core/theming/theme_mode.dart';
+import 'package:vikunja_app/domain/entities/task_filter.dart';
 
 abstract class SettingsRepository {
   Future<bool> getIgnoreCertificates();
@@ -52,4 +53,8 @@ abstract class SettingsRepository {
   // Task list collapsed sections
   Future<Set<String>> getCollapsedTaskSections();
   Future<void> setCollapsedTaskSections(Set<String> sections);
+
+  // Task list filter state
+  Future<TaskFilter> getTaskFilter(String pageKey);
+  Future<void> setTaskFilter(String pageKey, TaskFilter filter);
 }

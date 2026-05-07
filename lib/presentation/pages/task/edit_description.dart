@@ -13,11 +13,16 @@ class EditDescription extends StatefulWidget {
 
 class EditDescriptionState extends State<EditDescription> {
   late EditorState _editorState;
+  late EditorScrollController _editorScrollController;
 
   @override
   void initState() {
     super.initState();
     _editorState = EditorState(document: _initialDocument(widget.initialText));
+    _editorScrollController = EditorScrollController(
+      editorState: _editorState,
+      shrinkWrap: false,
+    );
   }
 
   Document _initialDocument(String? raw) {
@@ -35,6 +40,7 @@ class EditDescriptionState extends State<EditDescription> {
   @override
   void dispose() {
     _editorState.dispose();
+    _editorScrollController.dispose();
     super.dispose();
   }
 
@@ -56,8 +62,52 @@ class EditDescriptionState extends State<EditDescription> {
           ),
         ],
       ),
-      body: AppFlowyEditor(
+      body: MobileToolbarV2(
         editorState: _editorState,
+        toolbarItems: [
+          textDecorationMobileToolbarItemV2,
+          buildTextAndBackgroundColorMobileToolbarItem(),
+          blocksMobileToolbarItem,
+          linkMobileToolbarItem,
+          dividerMobileToolbarItem,
+        ],
+        child: Column(
+          children: [
+            Expanded(
+              child: MobileFloatingToolbar(
+                editorState: _editorState,
+                editorScrollController: _editorScrollController,
+                floatingToolbarHeight: 32,
+                toolbarBuilder: (context, anchor, closeToolbar) {
+                  return AdaptiveTextSelectionToolbar.editable(
+                    clipboardStatus: ClipboardStatus.pasteable,
+                    onCopy: () {
+                      copyCommand.execute(_editorState);
+                      closeToolbar();
+                    },
+                    onCut: () => cutCommand.execute(_editorState),
+                    onPaste: () => pasteCommand.execute(_editorState),
+                    onSelectAll: () => selectAllCommand.execute(_editorState),
+                    onLiveTextInput: null,
+                    onLookUp: null,
+                    onSearchWeb: null,
+                    onShare: null,
+                    anchors: TextSelectionToolbarAnchors(primaryAnchor: anchor),
+                  );
+                },
+                child: AppFlowyEditor(
+                  editorState: _editorState,
+                  editorScrollController: _editorScrollController,
+                  editorStyle: EditorStyle.mobile(
+                    padding: const EdgeInsets.symmetric(horizontal: 24.0),
+                  ),
+                  blockComponentBuilders: standardBlockComponentBuilderMap,
+                  showMagnifier: true,
+                ),
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }

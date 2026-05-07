@@ -11,6 +11,7 @@ import 'package:vikunja_app/data/data_sources/task_comment_data_source.dart';
 import 'package:vikunja_app/data/data_sources/task_data_source.dart';
 import 'package:vikunja_app/data/data_sources/task_label_bulk_data_source.dart';
 import 'package:vikunja_app/data/data_sources/task_label_data_source.dart';
+import 'package:vikunja_app/data/data_sources/task_relation_data_source.dart';
 import 'package:vikunja_app/data/data_sources/user_data_source.dart';
 import 'package:vikunja_app/data/data_sources/version_data_source.dart';
 
@@ -84,4 +85,10 @@ VersionDataSource versionDataSource(Ref ref) {
 TaskCommentDataSource taskCommentDataSource(Ref ref) {
   final client = ref.watch(clientProviderProvider);
   return TaskCommentDataSource(client);
+}
+
+@riverpod
+TaskRelationDataSource taskRelationDataSource(Ref ref) {
+  final client = ref.watch(clientProviderProvider);
+  return TaskRelationDataSource(client);
 }

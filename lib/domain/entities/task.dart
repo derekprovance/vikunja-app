@@ -3,6 +3,7 @@ import 'package:vikunja_app/core/utils/color_extensions.dart';
 import 'package:vikunja_app/domain/entities/label.dart';
 import 'package:vikunja_app/domain/entities/project.dart';
 import 'package:vikunja_app/domain/entities/task_attachment.dart';
+import 'package:vikunja_app/domain/entities/task_relation.dart';
 import 'package:vikunja_app/domain/entities/task_reminder.dart';
 import 'package:vikunja_app/domain/entities/user.dart';
 
@@ -25,6 +26,7 @@ class Task {
   List<Task> subtasks;
   List<Label> labels;
   List<TaskAttachment> attachments;
+  List<TaskRelation> relatedTasks;
 
   Task({
     this.id = 0,
@@ -45,6 +47,7 @@ class Task {
     this.subtasks = const [],
     this.labels = const [],
     this.attachments = const [],
+    this.relatedTasks = const [],
     DateTime? created,
     DateTime? updated,
     required this.createdBy,
@@ -97,6 +100,7 @@ class Task {
     List<Task>? subtasks,
     List<Label>? labels,
     List<TaskAttachment>? attachments,
+    List<TaskRelation>? relatedTasks,
   }) {
     return Task(
       id: id ?? this.id,
@@ -122,6 +126,7 @@ class Task {
       subtasks: subtasks ?? this.subtasks,
       labels: labels ?? this.labels,
       attachments: attachments ?? this.attachments,
+      relatedTasks: relatedTasks ?? this.relatedTasks,
     );
   }
 }

@@ -7,12 +7,14 @@ import 'package:vikunja_app/core/di/network_provider.dart';
 import 'package:vikunja_app/core/di/notification_provider.dart';
 import 'package:vikunja_app/domain/entities/project.dart';
 import 'package:vikunja_app/domain/entities/task.dart';
+import 'package:vikunja_app/domain/entities/task_filter.dart';
 import 'package:vikunja_app/domain/entities/task_page_model.dart';
 import 'package:vikunja_app/domain/entities/view_kind.dart';
 import 'package:vikunja_app/l10n/gen/app_localizations.dart';
 import 'package:vikunja_app/presentation/manager/notifications.dart';
 import 'package:vikunja_app/presentation/manager/project_controller.dart';
 import 'package:vikunja_app/presentation/manager/projects_controller.dart';
+import 'package:vikunja_app/presentation/manager/task_filter_controller.dart';
 import 'package:vikunja_app/presentation/manager/task_page_controller.dart';
 import 'package:vikunja_app/presentation/manager/task_section_collapsed_controller.dart';
 import 'package:vikunja_app/presentation/pages/error_widget.dart';
@@ -23,6 +25,7 @@ import 'package:vikunja_app/presentation/widgets/project/kanban/kanban_widget.da
 import 'package:vikunja_app/presentation/widgets/project/project_picker_sheet.dart';
 import 'package:vikunja_app/presentation/widgets/project/project_task_list.dart';
 import 'package:vikunja_app/presentation/widgets/task/add_task_dialog.dart';
+import 'package:vikunja_app/presentation/widgets/task/filter_sheet.dart';
 import 'package:vikunja_app/presentation/widgets/task/task_list_item.dart';
 import 'package:vikunja_app/presentation/widgets/task/task_section_header.dart';
 import 'package:vikunja_app/presentation/pages/task/task_detail_page.dart';
@@ -183,20 +186,24 @@ class TaskListPageState extends ConsumerState<TaskListPage> {
   // ============================================================================
 
   AppBar _buildAllTasksAppBar(TaskPageModel model) {
+    final filterAsync = ref.watch(
+      taskFilterControllerProvider(TaskFilterScope.allTasks),
+    );
+    final isActive = filterAsync.value?.isActive ?? false;
+
     return AppBar(
       title: _buildProjectChip(null),
       actions: [
-        Tooltip(
-          message: AppLocalizations.of(context).onlyShowTasksWithDueDate,
-          child: IconButton(
-            icon: Icon(
-              model.onlyDueDate ? Icons.filter_list : Icons.filter_list_alt,
-            ),
-            onPressed: () {
-              ref
-                  .read(taskPageControllerProvider.notifier)
-                  .setLandingPageOnlyDueDateTasks(!model.onlyDueDate);
-            },
+        IconButton(
+          icon: Icon(
+            isActive ? Icons.filter_list : Icons.filter_list_outlined,
+          ),
+          tooltip: AppLocalizations.of(context).filterTasks,
+          onPressed: () => showModalBottomSheet(
+            context: context,
+            isScrollControlled: true,
+            builder: (_) =>
+                const FilterSheet(pageKey: TaskFilterScope.allTasks),
           ),
         ),
       ],
@@ -213,6 +220,11 @@ class TaskListPageState extends ConsumerState<TaskListPage> {
         ? _viewIndex.clamp(0, project.views.length - 1)
         : 0;
     final title = _isLocked ? Text(project.title) : _buildProjectChip(project);
+    final filterAsync = ref.watch(
+      taskFilterControllerProvider(TaskFilterScope.project(project.id)),
+    );
+    final isActive = filterAsync.value?.isActive ?? false;
+
     return AppBar(
       title: title,
       actions: [
@@ -247,6 +259,18 @@ class TaskListPageState extends ConsumerState<TaskListPage> {
                 )
                 .toList(),
           ),
+        IconButton(
+          icon: Icon(
+            isActive ? Icons.filter_list : Icons.filter_list_outlined,
+          ),
+          tooltip: AppLocalizations.of(context).filterTasks,
+          onPressed: () => showModalBottomSheet(
+            context: context,
+            isScrollControlled: true,
+            builder: (_) =>
+                FilterSheet(pageKey: TaskFilterScope.project(project.id)),
+          ),
+        ),
         IconButton(
           icon: const Icon(Icons.edit),
           onPressed: () => Navigator.push(

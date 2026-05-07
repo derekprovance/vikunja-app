@@ -18,7 +18,9 @@ class TaskSectionCollapsedController extends _$TaskSectionCollapsedController {
     final previous = state;
     state = AsyncData(updated);
     try {
-      await ref.read(settingsRepositoryProvider).setCollapsedTaskSections(updated);
+      await ref
+          .read(settingsRepositoryProvider)
+          .setCollapsedTaskSections(updated);
     } catch (_) {
       state = previous;
       rethrow;

@@ -2,6 +2,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:vikunja_app/core/di/repository_provider.dart';
 import 'package:vikunja_app/core/theming/theme_mode.dart';
+import 'package:vikunja_app/domain/entities/task_filter.dart';
 import 'package:vikunja_app/domain/repositories/settings_repository.dart';
 import 'package:vikunja_app/presentation/manager/task_section_collapsed_controller.dart';
 
@@ -91,6 +92,12 @@ class FakeSettingsRepository implements SettingsRepository {
   Future<void> setCollapsedTaskSections(Set<String> sections) async {
     _store['collapsed'] = sections;
   }
+
+  @override
+  Future<TaskFilter> getTaskFilter(String pageKey) async => TaskFilter.empty;
+
+  @override
+  Future<void> setTaskFilter(String pageKey, TaskFilter filter) async {}
 }
 
 void main() {

@@ -240,10 +240,8 @@ class TaskListItemState extends State<TaskListItem> {
     final hasPriority =
         widget.task.priority != null && widget.task.priority != 0;
     final hasUpcomingDueDate = widget.task.hasDueDate && !isOverdue;
-    final hasLabels = widget.task.labels.isNotEmpty;
     final hasAttachments = widget.task.attachments.isNotEmpty;
-    final hasMetadata =
-        hasPriority || hasUpcomingDueDate || hasLabels || hasAttachments;
+    final hasProject = widget.task.project != null;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -264,12 +262,14 @@ class TaskListItemState extends State<TaskListItem> {
             overflow: TextOverflow.ellipsis,
           ),
         ),
-        if (hasMetadata) ...[
-          const SizedBox(height: 6),
-          Wrap(
+        const SizedBox(height: 6),
+        ConstrainedBox(
+          constraints: const BoxConstraints(minHeight: 20),
+          child: Wrap(
             spacing: 4,
             runSpacing: 4,
             children: [
+              if (hasProject) _buildProjectChip(theme),
               if (hasPriority) PriorityBatch(widget.task.priority!),
               if (hasUpcomingDueDate) DueDateCard(widget.task.dueDate!),
               ...widget.task.labels.map(
@@ -286,7 +286,7 @@ class TaskListItemState extends State<TaskListItem> {
                 ),
             ],
           ),
-        ],
+        ),
       ],
     );
   }
@@ -316,6 +316,35 @@ class TaskListItemState extends State<TaskListItem> {
                 )
               : const SizedBox.shrink(key: ValueKey('empty')),
         ),
+      ),
+    );
+  }
+
+  Widget _buildProjectChip(ThemeData theme) {
+    final project = widget.task.project!;
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+      decoration: BoxDecoration(
+        color: project.color ?? theme.colorScheme.surfaceContainerHighest,
+        borderRadius: const BorderRadius.all(Radius.circular(12)),
+        border: Border.all(color: theme.colorScheme.outlineVariant, width: 1),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(
+            Icons.folder_outlined,
+            size: 10,
+            color: theme.colorScheme.onSurfaceVariant,
+          ),
+          const SizedBox(width: 3),
+          Text(
+            project.title,
+            style: theme.textTheme.labelSmall?.copyWith(
+              fontWeight: FontWeight.w500,
+            ),
+          ),
+        ],
       ),
     );
   }

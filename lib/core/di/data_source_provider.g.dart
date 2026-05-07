@@ -558,3 +558,51 @@ final class TaskCommentDataSourceProvider
 
 String _$taskCommentDataSourceHash() =>
     r'a5c3bcd4ee6ccdf2f1a703c6dfe6791ff7f32cc1';
+
+@ProviderFor(taskRelationDataSource)
+final taskRelationDataSourceProvider = TaskRelationDataSourceProvider._();
+
+final class TaskRelationDataSourceProvider
+    extends
+        $FunctionalProvider<
+          TaskRelationDataSource,
+          TaskRelationDataSource,
+          TaskRelationDataSource
+        >
+    with $Provider<TaskRelationDataSource> {
+  TaskRelationDataSourceProvider._()
+    : super(
+        from: null,
+        argument: null,
+        retry: null,
+        name: r'taskRelationDataSourceProvider',
+        isAutoDispose: true,
+        dependencies: null,
+        $allTransitiveDependencies: null,
+      );
+
+  @override
+  String debugGetCreateSourceHash() => _$taskRelationDataSourceHash();
+
+  @$internal
+  @override
+  $ProviderElement<TaskRelationDataSource> $createElement(
+    $ProviderPointer pointer,
+  ) => $ProviderElement(pointer);
+
+  @override
+  TaskRelationDataSource create(Ref ref) {
+    return taskRelationDataSource(ref);
+  }
+
+  /// {@macro riverpod.override_with_value}
+  Override overrideWithValue(TaskRelationDataSource value) {
+    return $ProviderOverride(
+      origin: this,
+      providerOverride: $SyncValueProvider<TaskRelationDataSource>(value),
+    );
+  }
+}
+
+String _$taskRelationDataSourceHash() =>
+    r'4a5b553bc713e0f16a950fc60a2c2155a4a0f832';

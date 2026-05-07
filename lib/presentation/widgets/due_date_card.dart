@@ -15,9 +15,9 @@ class DueDateCard extends StatelessWidget {
     return Card(
       margin: EdgeInsets.zero,
       color: bgColor,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(4.0)),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12.0)),
       child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 4.0, vertical: 2),
+        padding: const EdgeInsets.symmetric(horizontal: 8.0, vertical: 2),
         child: Text(durationToHumanReadable(difference), style: textStyle),
       ),
     );
@@ -30,7 +30,7 @@ class DueDateCard extends StatelessWidget {
   }
 
   TextStyle? _getTextStyle(BuildContext context, Duration difference) {
-    return Theme.of(context).textTheme.bodySmall?.copyWith(
+    return Theme.of(context).textTheme.labelSmall?.copyWith(
       color: difference.isNegative ? Theme.of(context).colorScheme.error : null,
     );
   }

@@ -31,18 +31,12 @@ class TaskSectionHeader extends StatelessWidget {
         child: Row(
           children: [
             if (onTap != null) ...[
-              Icon(
-                caretIcon,
-                size: 18,
-                color: primary,
-              ),
+              Icon(caretIcon, size: 18, color: primary),
               const SizedBox(width: 4),
             ],
             Text(
               title.toUpperCase(),
-              style: theme.textTheme.labelLarge?.copyWith(
-                color: primary,
-              ),
+              style: theme.textTheme.labelLarge?.copyWith(color: primary),
             ),
             const Spacer(),
             Text(
@@ -61,7 +55,8 @@ class TaskSectionHeader extends StatelessWidget {
           ? Semantics(
               button: true,
               expanded: !isCollapsed,
-              label: '$title, ${AppLocalizations.of(context).taskSectionItemCount(count)}',
+              label:
+                  '$title, ${AppLocalizations.of(context).taskSectionItemCount(count)}',
               child: Material(
                 color: Colors.transparent,
                 child: InkWell(onTap: onTap, child: content),

@@ -17,6 +17,7 @@ class CommentEditPage extends ConsumerStatefulWidget {
 
 class _CommentEditPageState extends ConsumerState<CommentEditPage> {
   late EditorState _editorState;
+  late EditorScrollController _editorScrollController;
   bool _isSaving = false;
 
   bool get _isEditMode => widget.comment != null;
@@ -25,6 +26,10 @@ class _CommentEditPageState extends ConsumerState<CommentEditPage> {
   void initState() {
     super.initState();
     _editorState = EditorState(document: _initialDocument(widget.comment?.comment));
+    _editorScrollController = EditorScrollController(
+      editorState: _editorState,
+      shrinkWrap: false,
+    );
   }
 
   Document _initialDocument(String? raw) {
@@ -42,6 +47,7 @@ class _CommentEditPageState extends ConsumerState<CommentEditPage> {
   @override
   void dispose() {
     _editorState.dispose();
+    _editorScrollController.dispose();
     super.dispose();
   }
 
@@ -120,8 +126,52 @@ class _CommentEditPageState extends ConsumerState<CommentEditPage> {
           ),
         ],
       ),
-      body: AppFlowyEditor(
+      body: MobileToolbarV2(
         editorState: _editorState,
+        toolbarItems: [
+          textDecorationMobileToolbarItemV2,
+          buildTextAndBackgroundColorMobileToolbarItem(),
+          blocksMobileToolbarItem,
+          linkMobileToolbarItem,
+          dividerMobileToolbarItem,
+        ],
+        child: Column(
+          children: [
+            Expanded(
+              child: MobileFloatingToolbar(
+                editorState: _editorState,
+                editorScrollController: _editorScrollController,
+                floatingToolbarHeight: 32,
+                toolbarBuilder: (context, anchor, closeToolbar) {
+                  return AdaptiveTextSelectionToolbar.editable(
+                    clipboardStatus: ClipboardStatus.pasteable,
+                    onCopy: () {
+                      copyCommand.execute(_editorState);
+                      closeToolbar();
+                    },
+                    onCut: () => cutCommand.execute(_editorState),
+                    onPaste: () => pasteCommand.execute(_editorState),
+                    onSelectAll: () => selectAllCommand.execute(_editorState),
+                    onLiveTextInput: null,
+                    onLookUp: null,
+                    onSearchWeb: null,
+                    onShare: null,
+                    anchors: TextSelectionToolbarAnchors(primaryAnchor: anchor),
+                  );
+                },
+                child: AppFlowyEditor(
+                  editorState: _editorState,
+                  editorScrollController: _editorScrollController,
+                  editorStyle: EditorStyle.mobile(
+                    padding: const EdgeInsets.symmetric(horizontal: 24.0),
+                  ),
+                  blockComponentBuilders: standardBlockComponentBuilderMap,
+                  showMagnifier: true,
+                ),
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }

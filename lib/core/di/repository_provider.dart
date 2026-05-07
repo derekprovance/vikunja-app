@@ -9,6 +9,7 @@ import 'package:vikunja_app/data/repositories/settings_repository_impl.dart';
 import 'package:vikunja_app/data/repositories/task_comment_repository_impl.dart';
 import 'package:vikunja_app/data/repositories/task_label_bulk_repository_impl.dart';
 import 'package:vikunja_app/data/repositories/task_label_repository_impl.dart';
+import 'package:vikunja_app/data/repositories/task_relation_repository_impl.dart';
 import 'package:vikunja_app/data/repositories/task_repository_impl.dart';
 import 'package:vikunja_app/data/repositories/user_repository_impl.dart';
 import 'package:vikunja_app/data/repositories/version_repository_impl.dart';
@@ -19,6 +20,7 @@ import 'package:vikunja_app/domain/repositories/server_repository.dart';
 import 'package:vikunja_app/domain/repositories/settings_repository.dart';
 import 'package:vikunja_app/domain/repositories/task_comment_repository.dart';
 import 'package:vikunja_app/domain/repositories/task_label_bulk_repository.dart';
+import 'package:vikunja_app/domain/repositories/task_relation_repository.dart';
 import 'package:vikunja_app/domain/repositories/task_repository.dart';
 import 'package:vikunja_app/domain/repositories/user_repository.dart';
 import 'package:vikunja_app/domain/repositories/version_repository.dart';
@@ -95,4 +97,10 @@ VersionRepository versionRepository(Ref ref) {
 TaskCommentRepository taskCommentRepository(Ref ref) {
   var taskCommentDataSource = ref.watch(taskCommentDataSourceProvider);
   return TaskCommentRepositoryImpl(taskCommentDataSource);
+}
+
+@riverpod
+TaskRelationRepository taskRelationRepository(Ref ref) {
+  var taskRelationDataSource = ref.watch(taskRelationDataSourceProvider);
+  return TaskRelationRepositoryImpl(taskRelationDataSource);
 }

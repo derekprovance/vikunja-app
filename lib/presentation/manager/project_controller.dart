@@ -6,9 +6,11 @@ import 'package:vikunja_app/domain/entities/bucket.dart';
 import 'package:vikunja_app/domain/entities/project.dart';
 import 'package:vikunja_app/domain/entities/project_page_model.dart';
 import 'package:vikunja_app/domain/entities/task.dart';
+import 'package:vikunja_app/domain/entities/task_filter.dart';
 import 'package:vikunja_app/domain/entities/view_kind.dart';
 import 'package:vikunja_app/presentation/manager/pagination_mixin.dart';
 import 'package:vikunja_app/presentation/manager/projects_controller.dart';
+import 'package:vikunja_app/presentation/manager/task_filter_controller.dart';
 
 part 'project_controller.g.dart';
 
@@ -16,6 +18,7 @@ part 'project_controller.g.dart';
 class ProjectController extends _$ProjectController with PaginationMixin<Task> {
   @override
   Future<ProjectPageModel> build(Project project) async {
+    ref.watch(taskFilterControllerProvider(TaskFilterScope.project(project.id)));
     resetPagination();
 
     var displayDoneTask = await ref
@@ -202,10 +205,15 @@ class ProjectController extends _$ProjectController with PaginationMixin<Task> {
             "page": ["$page"],
           };
 
-    if (!displayDoneTasks) {
-      queryParams.addAll({
-        "filter": ["done=false"],
-      });
+    final filter = await ref
+        .read(taskFilterControllerProvider(TaskFilterScope.project(projectId)).future);
+    final filterClauses = <String>[
+      if (!displayDoneTasks) "done = false",
+      ...filter.toFilterClauses(),
+    ];
+
+    if (filterClauses.isNotEmpty) {
+      queryParams["filter"] = [filterClauses.join(" && ")];
     }
 
     return view == null
@@ -237,7 +245,8 @@ class ProjectController extends _$ProjectController with PaginationMixin<Task> {
       var value = state.value;
       if (value != null) {
         final views = value.project.views;
-        final isListView = views.isNotEmpty &&
+        final isListView =
+            views.isNotEmpty &&
             value.viewIndex < views.length &&
             views[value.viewIndex].viewKind == ViewKind.list;
 

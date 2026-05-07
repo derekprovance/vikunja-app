@@ -129,10 +129,7 @@
     "description": "Snackbar text notifying the user about a new version.",
     "placeholders": { "version": { "type": "String" } }
   },
-  "unsavedChangesTitle": "You have unsaved changes!",
-  "unsavedChangesMessage": "Would you like to dismiss those changes?",
   "dismiss": "Dismiss",
-  "keepEditing": "Keep editing",
   "deleteTaskTitle": "Delete Task",
   "deleteTaskMessage": "Are you sure you want to delete this task?",
   "taskColorTitle": "Task Color",
@@ -265,5 +262,104 @@
   "settingsAppearanceSection": "Appearance",
   "settingsNetworkSection": "Network & Sync",
   "settingsNotificationsSection": "Notifications & Version",
-  "settingsAccountSection": "Account"
+  "settingsAccountSection": "Account",
+  "relationships": "Related Tasks",
+  "@relationships": {
+    "description": "Title of the task relations section in task detail view"
+  },
+  "noRelationships": "No related tasks yet",
+  "@noRelationships": {
+    "description": "Message shown when a task has no related tasks"
+  },
+  "addRelationship": "Add relation",
+  "@addRelationship": {
+    "description": "Title of the dialog to add a new task relation"
+  },
+  "addRelationTooltip": "Add related task",
+  "@addRelationTooltip": {
+    "description": "Tooltip for the button to add a new task relation"
+  },
+  "relationSubtask": "Subtask",
+  "@relationSubtask": {
+    "description": "Relation kind: the related task is a subtask of the current task"
+  },
+  "relationParentTask": "Parent task",
+  "@relationParentTask": {
+    "description": "Relation kind: the related task is a parent of the current task"
+  },
+  "relationRelated": "Related",
+  "@relationRelated": {
+    "description": "Relation kind: the related task is generally related to the current task"
+  },
+  "relationDuplicateOf": "Duplicate of",
+  "@relationDuplicateOf": {
+    "description": "Relation kind: the current task is a duplicate of the related task"
+  },
+  "relationDuplicates": "Duplicates",
+  "@relationDuplicates": {
+    "description": "Relation kind: the related task is a duplicate of the current task"
+  },
+  "relationBlocking": "Blocking",
+  "@relationBlocking": {
+    "description": "Relation kind: the current task is blocking the related task"
+  },
+  "relationBlocked": "Blocked by",
+  "@relationBlocked": {
+    "description": "Relation kind: the current task is blocked by the related task"
+  },
+  "relationPrecedes": "Precedes",
+  "@relationPrecedes": {
+    "description": "Relation kind: the current task must be done before the related task"
+  },
+  "relationFollows": "Follows",
+  "@relationFollows": {
+    "description": "Relation kind: the current task must be done after the related task"
+  },
+  "relationCopiedFrom": "Copied from",
+  "@relationCopiedFrom": {
+    "description": "Relation kind: the current task was copied from the related task"
+  },
+  "relationCopiedTo": "Copied to",
+  "@relationCopiedTo": {
+    "description": "Relation kind: the related task was copied from the current task"
+  },
+  "relationUnknown": "Unknown",
+  "@relationUnknown": {
+    "description": "Relation kind: unknown or invalid relation type"
+  },
+  "deleteRelationTitle": "Delete Relation",
+  "@deleteRelationTitle": {
+    "description": "Title of the confirmation dialog when deleting a task relation"
+  },
+  "deleteRelationConfirm": "Remove this relation?",
+  "@deleteRelationConfirm": {
+    "description": "Confirmation message when deleting a task relation"
+  },
+  "relationAddError": "Failed to add relation",
+  "@relationAddError": {
+    "description": "Error message shown when adding a task relation fails"
+  },
+  "relationDeleteError": "Failed to delete relation",
+  "@relationDeleteError": {
+    "description": "Error message shown when deleting a task relation fails"
+  },
+  "relationLoadError": "Failed to load task",
+  "@relationLoadError": {
+    "description": "Error message shown when opening a related task fails"
+  },
+  "searchTasksHint": "Search tasks...",
+  "@searchTasksHint": {
+    "description": "Placeholder text for the task search field in the add relation sheet"
+  },
+  "selectRelationKind": "Select relation type",
+  "@selectRelationKind": {
+    "description": "Label for the relation type (kind) dropdown in the add relation sheet"
+  },
+  "filterTasks": "Filter Tasks",
+  "filterHasDueDate": "Has Due Date",
+  "filterClearAll": "Clear All",
+  "filterApply": "Apply",
+  "filterLabels": "Labels",
+  "filterNoLabels": "No labels available",
+  "versionCheckError": "Couldn't get latest version"
 }

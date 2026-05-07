@@ -5,8 +5,10 @@ import 'package:vikunja_app/core/di/repository_provider.dart';
 import 'package:vikunja_app/core/network/response.dart';
 import 'package:vikunja_app/domain/entities/project.dart';
 import 'package:vikunja_app/domain/entities/task.dart';
+import 'package:vikunja_app/domain/entities/task_filter.dart';
 import 'package:vikunja_app/domain/entities/task_page_model.dart';
 import 'package:vikunja_app/presentation/manager/pagination_mixin.dart';
+import 'package:vikunja_app/presentation/manager/task_filter_controller.dart';
 import 'package:vikunja_app/presentation/manager/widget_controller.dart';
 
 part 'task_page_controller.g.dart';
@@ -16,6 +18,7 @@ class TaskPageController extends _$TaskPageController
     with PaginationMixin<Task> {
   @override
   Future<TaskPageModel> build() async {
+    ref.watch(taskFilterControllerProvider(TaskFilterScope.allTasks));
     resetPagination();
 
     var tasksResponse = await _getAllFiltered();
@@ -118,10 +121,6 @@ class TaskPageController extends _$TaskPageController
   }
 
   Future<Response<List<Task>>> _getAllFiltered({int page = 1}) async {
-    var showOnlyDueDateTasks = await ref
-        .read(settingsRepositoryProvider)
-        .getLandingPageOnlyDueDateTasks();
-
     var user = ref.read(currentUserProvider);
     if (user != null) {
       Map<String, dynamic>? frontendSettings = user.settings?.frontendSettings;
@@ -139,9 +138,20 @@ class TaskPageController extends _$TaskPageController
       }
     }
 
-    List<String> filterStrings = ["done = false"];
-    if (showOnlyDueDateTasks) {
-      filterStrings.add("due_date > 0001-01-01 00:00");
+    final filter =
+        await ref.read(taskFilterControllerProvider(TaskFilterScope.allTasks).future);
+
+    final filterStrings = <String>["done = false", ...filter.toFilterClauses()];
+
+    // Legacy: if no explicit due-date filter is set, fall back to the old
+    // "only due date tasks" toggle so existing user settings are honoured.
+    if (filter.dueDateFilter == null) {
+      final legacyShowOnlyDueDate = await ref
+          .read(settingsRepositoryProvider)
+          .getLandingPageOnlyDueDateTasks();
+      if (legacyShowOnlyDueDate) {
+        filterStrings.add("due_date > 0001-01-01 00:00");
+      }
     }
 
     var tasksResponse = await ref

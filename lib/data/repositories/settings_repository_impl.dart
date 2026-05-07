@@ -1,5 +1,6 @@
 import 'package:vikunja_app/core/theming/theme_mode.dart';
 import 'package:vikunja_app/data/data_sources/settings_data_source.dart';
+import 'package:vikunja_app/domain/entities/task_filter.dart';
 import 'package:vikunja_app/domain/repositories/settings_repository.dart';
 
 class SettingsRepositoryImpl implements SettingsRepository {
@@ -135,5 +136,15 @@ class SettingsRepositoryImpl implements SettingsRepository {
   @override
   Future<void> setCollapsedTaskSections(Set<String> sections) {
     return _datasource.setCollapsedTaskSections(sections);
+  }
+
+  @override
+  Future<TaskFilter> getTaskFilter(String pageKey) {
+    return _datasource.getTaskFilter(pageKey);
+  }
+
+  @override
+  Future<void> setTaskFilter(String pageKey, TaskFilter filter) {
+    return _datasource.setTaskFilter(pageKey, filter);
   }
 }

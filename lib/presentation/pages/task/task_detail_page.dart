@@ -14,6 +14,7 @@ import 'package:vikunja_app/presentation/pages/task/task_page_result.dart';
 import 'package:vikunja_app/presentation/widgets/label_widget.dart';
 import 'package:vikunja_app/presentation/widgets/task/task_attachment_preview.dart';
 import 'package:vikunja_app/presentation/widgets/task/task_comments.dart';
+import 'package:vikunja_app/presentation/widgets/task/task_relations.dart';
 
 class TaskDetailPage extends ConsumerStatefulWidget {
   final Task task;
@@ -257,6 +258,12 @@ class _TaskDetailPageState extends ConsumerState<TaskDetailPage> {
       widgets.add(infoSection);
       widgets.add(const SizedBox(height: 16));
     }
+
+    // Relationships section
+    widgets.add(
+      TaskRelations(taskId: _task.id, initialRelations: _task.relatedTasks),
+    );
+    widgets.add(const SizedBox(height: 16));
 
     // Comments section
     widgets.add(TaskComments(taskId: _task.id));

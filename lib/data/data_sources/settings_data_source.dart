@@ -2,6 +2,7 @@ import 'dart:convert';
 
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:vikunja_app/core/theming/theme_mode.dart';
+import 'package:vikunja_app/domain/entities/task_filter.dart';
 
 class SettingsDatasource {
   final FlutterSecureStorage _storage;
@@ -168,6 +169,18 @@ class SettingsDatasource {
     await _storage.write(
       key: "task_list_collapsed_sections",
       value: jsonEncode(sections.toList()),
+    );
+  }
+
+  Future<TaskFilter> getTaskFilter(String pageKey) async {
+    final raw = await _storage.read(key: 'task_filter_$pageKey');
+    return TaskFilter.tryParse(raw) ?? TaskFilter.empty;
+  }
+
+  Future<void> setTaskFilter(String pageKey, TaskFilter filter) async {
+    await _storage.write(
+      key: 'task_filter_$pageKey',
+      value: jsonEncode(filter.toJson()),
     );
   }
 }

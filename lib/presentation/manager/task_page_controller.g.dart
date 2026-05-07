@@ -34,7 +34,7 @@ final class TaskPageControllerProvider
 }
 
 String _$taskPageControllerHash() =>
-    r'2c9eb5c4439082415ad25c0833c8c5adb84bb530';
+    r'aaf304eb469da8f856e00322e5c2cdedc4b06f81';
 
 abstract class _$TaskPageController extends $AsyncNotifier<TaskPageModel> {
   FutureOr<TaskPageModel> build();

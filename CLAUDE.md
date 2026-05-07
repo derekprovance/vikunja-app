@@ -4,128 +4,110 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-Vikunja is a cross-platform Flutter app for the open-source Vikunja task management system. The app supports Android, iOS, and web, with features including task management, Kanban/Gantt/table views, team collaboration, and end-to-end encryption support.
+Vikunja is a cross-platform Flutter app (Android primary focus, iOS community-supported) for the open-source Vikunja task management system. The app supports task management, Kanban/Gantt/table views, team collaboration, and end-to-end encryption.
 
-The app is in **alpha pre-release** and requires the latest unstable build of Vikunja to run. It uses Flutter 3.9+ and Dart 3.9+.
+The app is in **alpha pre-release** and requires the latest unstable build of Vikunja. Uses Flutter with Dart 3.9+.
 
-## Common Development Tasks
+## Commands
 
-### Get Started
 ```bash
 flutter pub get
-make format  # Format code before committing
+make format                                          # Format lib/ before committing
+make format-check                                    # Check formatting (exits 1 if unformatted)
+make test                                            # Run all tests
+flutter test test/<file>_test.dart                   # Run a single test file
+flutter test -n "pattern"                            # Run tests matching a name pattern
+flutter analyze                                      # Dart analyzer + custom_lint
+flutter pub run build_runner build                   # One-time code generation
+flutter pub run build_runner watch                   # Watch mode during development
 ```
 
-### Build & Run
-- **Debug APK**: `make build-debug` (unsigned flavor, debug mode)
-- **Release APK**: `make build-unsigned-release` (unsigned flavor, minified/optimized, debug-signed — for local testing)
-- **Profile APK**: `make build-profile` (unsigned flavor, for performance profiling)
-- **iOS build**: `make build-ios` (no code signing, for development)
-- **All builds**: `make build-all`
-
-> Production Play Store builds use the `production` flavor and are handled by CI/Fastlane (requires `key.properties`).
-
-### Testing
+### Builds
 ```bash
-make test              # Run all tests
-flutter test test/<test_file>_test.dart  # Run specific test file
-flutter test -n "test name pattern"      # Run tests matching pattern
+make build-debug             # unsigned flavor, debug
+make build-unsigned-release  # unsigned flavor, minified, debug-signed (local testing)
+make build-profile           # unsigned flavor, performance profiling
+make build-ios               # iOS, no code signing
 ```
 
-### Code Quality
-```bash
-flutter analyze        # Run dart analyzer (includes custom_lint)
-make format-check      # Check formatting without applying changes
-make format            # Format all lib code
-```
+Production Play Store builds use the `production` flavor and are handled by CI/Fastlane.
 
-### Code Generation
-Code generation is needed when modifying:
-- Riverpod providers (`.dart` files in `lib/core/di/` and `lib/presentation/manager/`)
-- App localizations/translations
-
-Run code generation:
-```bash
-flutter pub run build_runner build              # One-time generation
-flutter pub run build_runner watch              # Watch mode during development
-```
-
-Generated files have `.g.dart` suffix and should never be edited directly.
+**Code Generation Requirement**: Every file with `@riverpod` annotations must have `part 'filename.g.dart';` at the top. Code generation will fail without it.
 
 ## Architecture
 
-The app follows **clean architecture** with clear separation of concerns:
+Clean architecture with three layers — domain → data → presentation — plus core for cross-cutting concerns.
 
-### Domain Layer (`lib/domain/`)
-- **entities/**: Plain Dart classes representing core business concepts (Task, Project, Label, etc.)
-- **repositories/**: Abstract interfaces defining repository contracts
+- **`lib/domain/`** — entities (plain Dart) and abstract repository interfaces. No framework dependencies.
+- **`lib/data/`** — DTOs (`*Dto` suffix), data sources, and concrete repository implementations. All JSON serialization is **manual** (no `json_serializable`). DTO↔entity conversion uses `toDomain()` / `fromDomain()` extensions.
+- **`lib/presentation/`** — Riverpod controllers (`manager/`), pages, and widgets.
+- **`lib/core/`** — DI providers, network client, OAuth, theming, utilities.
 
-### Data Layer (`lib/data/`)
-- **models/**: DTOs (Data Transfer Objects) with `*Dto` suffix for API serialization/deserialization
-- **data_sources/**: Concrete implementations for different data sources (API, local storage)
-- **repositories/**: Concrete implementations of domain repository interfaces
+## Dependency Injection
 
-### Presentation Layer (`lib/presentation/`)
-- **manager/**: Riverpod controllers managing state and business logic
-- **pages/**: Top-level screens/routes
-- **widgets/**: Reusable UI components
+Providers live in `lib/core/di/`:
 
-### Core Layer (`lib/core/`)
-- **di/**: Dependency injection providers using Riverpod
-- **network/**: HTTP client setup, response wrapping
-- **oauth/**: OAuth/OIDC authentication flow implementation
-- **theming/**: Theme management and Material/Cupertino design
-- **utils/**: Shared utilities (extensions, formatters, validators)
+- `network_provider.dart` — `AuthData`, `CurrentUser` (both `keepAlive: true`), and `ClientProvider` (`keepAlive: true`). These must persist for the app lifetime. When auth changes, `AuthData.set()` calls `ref.invalidate(clientProviderProvider)` to rebuild the client.
+- `data_source_provider.dart` — each data source watches `clientProviderProvider` and passes `Client` directly. `SettingsDatasource` is the exception (takes `FlutterSecureStorage` instead).
+- `repository_provider.dart` — each repo watches its data source and passes it to the `*Impl` constructor.
 
-**Key Pattern**: DTO → Domain Entity conversion happens in data layer via `toDomain()` and `fromDomain()` extensions.
+**Naming quirk**: Riverpod codegen for a class named `ClientProvider` generates `clientProviderProvider` (double "Provider").
 
-## State Management
+## State Management (Riverpod v3)
 
-The app uses **Flutter Riverpod** (v2.6.1+) with code generation via `riverpod_generator`:
+Controllers in `lib/presentation/manager/` follow this pattern:
+- Class-based `@riverpod` extending the generated `_$ClassName` base.
+- `build()` returns `Future<T>` for async providers.
+- State mutations call `reload()` (sets `AsyncLoading`, re-fetches) except for optimistic updates (delete/mark-done) which patch `state` directly.
+- Always check `ref.mounted` before mutating state after an `await`.
+- Use `ref.watch()` only inside `build()`; use `ref.read()` for one-shot reads inside methods.
 
-- Providers are defined in `lib/core/di/` (DI providers for services) and `lib/presentation/manager/` (UI state)
-- Riverpod providers are decorated with `@riverpod` or use class-based `Notifier` with `@riverpod` annotation
-- Generated `.g.dart` files are created automatically via `build_runner`
-- Custom lint rules from `riverpod_lint` help catch provider misuse
+`PaginationMixin` (`lib/presentation/manager/pagination_mixin.dart`) handles multi-page loading — reads `x-pagination-total-pages` from response headers.
 
-Avoid using deprecated `ChangeNotifierProvider` (Riverpod v1 style).
+## Network Layer (`lib/core/network/`)
+
+`Response<T>` is a sealed class:
+- `SuccessResponse<T>` — body, statusCode, headers
+- `VoidResponse<T>` — success with no body (extends `SuccessResponse`)
+- `ErrorResponse<T>` — statusCode + error map from JSON
+- `ExceptionResponse<T>` — exception + stackTrace
+
+All response handling in controllers uses exhaustive `switch` pattern matching on these cases.
+
+`Client` key behaviors:
+- Platform-specific HTTP: Cronet on Android, CupertinoClient on iOS/macOS, `IOClient` fallback.
+- On 401 with error code `11`, automatically refreshes the token (using `TokenLock` for cross-isolate safety) and retries the request once.
+- On 401 without a refresh path, navigates imperatively to `/login` via `globalNavigatorKey`.
+- `postUnauthenticated()` exists for login/token endpoints that don't need a Bearer header.
+
+Two important globals in `main.dart`:
+- `globalSnackbarKey` (`GlobalKey<ScaffoldMessengerState>`) — imperative snackbars
+- `globalNavigatorKey` (`GlobalKey<NavigatorState>`) — imperative navigation inside `Client`
 
 ## Build Flavors & Variants
 
-Two main flavors are configured:
-- **main**: Release builds with play store signing configuration
+Two flavors:
+- **production**: Release builds with play store signing (requires `key.properties`)
 - **unsigned**: Debug/profile builds without signing
 
-Flavors are defined in `android/app/build.gradle` and `ios/Runner/Build.xcconfig`. The Flutter default flavor is set to "unsigned" in `pubspec.yaml`.
+Default flavor is "unsigned" in `pubspec.yaml`. Android: `minSdkVersion 36` (Android 13+).
 
 ## Key Dependencies
 
-- **flutter_riverpod**: State management with code generation
+- **flutter_riverpod** (v3): State management with code generation
+- **http** (v1.6.0), **cronet_http** (Android), **cupertino_http** (iOS/macOS): Platform-specific HTTP clients
 - **background_downloader**: Download management for task attachments
 - **flutter_local_notifications**: Local push notifications
-- **sentry_flutter**: Error tracking and crash reporting
 - **workmanager**: Background task scheduling
 - **flutter_secure_storage**: Encrypted secure storage for tokens
 - **intl**: Internationalization (ARB files in `lib/l10n/`)
-- **dynamic_color**: Material You dynamic theming support
-- **home_widget**: Home screen widget (Android)
+- **app_links**: Deep linking support
+- **home_widget**: Home screen widget (Android, uses Jetpack Glance)
 
-## Internationalization (i18n)
 
-Translations use ARB (Application Resource Bundle) format:
-- Source translations: `lib/l10n/app_en.arb`
-- Other languages: `lib/l10n/app_<locale>.arb`
-- Run `flutter gen-l10n` to generate localization files
-- Access via `AppLocalizations.of(context)?.key` or `context.l10n.key` (if extension available)
+## Logging
 
-See [translation docs](https://vikunja.io/docs/translations/) for contributing new languages.
-
-## Error Tracking & Logging
-
-The app integrates **Sentry** for crash reporting and error tracking:
-- Configured in `lib/main.dart` with `SentryWidgetsFlutterBinding`
-- Network errors from Cronet (Android) are filtered to avoid noise (see `_ignoredNetworkErrors`)
-- Use Sentry SDK for manual event capture when needed
+The app uses the `logging` package for error tracking and event emission. Logs are captured via `dart:developer` and can be viewed during development.
 
 ## Testing Approach
 
@@ -144,45 +126,14 @@ OAuth/OIDC authentication is implemented in `lib/core/oauth/`:
 - Token refresh and storage in secure storage
 - Server version compatibility checks before login
 
-## Responsive & Multi-Platform Design
+## Localization
 
-The app supports:
-- **Android**: Uses Material Design and Cronet HTTP client
-- **iOS**: Uses Cupertino design elements and cupertino_http client
-- **Web**: Supported through Flutter Web
-
-Use `Theme.of(context).platform` to detect platform and adjust UI accordingly.
-
-## Performance Notes
-
-- **Code Generation**: Always run before committing Riverpod provider changes
-- **Lazy Loading**: Use `.select()` on Riverpod providers to listen only to needed state
-- **Image Assets**: Already optimized in `assets/` directory
-- **Profile Builds**: Use `make build-profile` for performance profiling before release
-
-## Common Patterns
-
-### Adding a New Feature
-1. Define entity in `lib/domain/entities/`
-2. Create abstract repository in `lib/domain/repositories/`
-3. Define DTO in `lib/data/models/` with serialization logic
-4. Implement data source in `lib/data/data_sources/`
-5. Implement repository in `lib/data/repositories/`
-6. Create Riverpod provider in `lib/core/di/repository_provider.dart` or appropriate location
-7. Create controller in `lib/presentation/manager/` if state management needed
-8. Build UI in `lib/presentation/pages/` and `lib/presentation/widgets/`
-
-### Adding a Repository Provider
-Edit `lib/core/di/repository_provider.dart` and re-run code generation.
-
-### Modifying API Models
-Update DTO in `lib/data/models/`, run code generation, ensure `toDomain()` and `fromDomain()` extensions work.
+ARB format, source in `lib/l10n/app_en.arb`. Access via `AppLocalizations.of(context)` or `context.l10n` (extension). Run `flutter gen-l10n` after editing ARB files.
 
 ## Debugging
 
 - **Enable verbose logging**: `flutter run -v`
 - **Dart DevTools**: `flutter pub global run devtools`
-- **Check Sentry dashboard**: Review sent errors/crashes
 - **Local API testing**: Point to local Vikunja instance in login settings
 
 ## Release Process
