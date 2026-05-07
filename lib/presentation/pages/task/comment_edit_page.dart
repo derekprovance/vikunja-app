@@ -24,10 +24,19 @@ class _CommentEditPageState extends ConsumerState<CommentEditPage> {
   @override
   void initState() {
     super.initState();
-    final doc = (widget.comment?.comment.trim().isNotEmpty ?? false)
-        ? AppFlowyEditorHTMLCodec().decode(widget.comment!.comment)
-        : EditorState.blank().document;
-    _editorState = EditorState(document: doc);
+    _editorState = EditorState(document: _initialDocument(widget.comment?.comment));
+  }
+
+  Document _initialDocument(String? raw) {
+    if (raw == null || raw.trim().isEmpty) {
+      return Document.blank(withInitialText: true);
+    }
+    try {
+      return htmlToDocument(raw);
+    } catch (e, st) {
+      debugPrintStack(stackTrace: st, label: 'Failed to decode comment HTML');
+      return Document.blank(withInitialText: true);
+    }
   }
 
   @override
@@ -39,26 +48,21 @@ class _CommentEditPageState extends ConsumerState<CommentEditPage> {
   Future<void> _save() async {
     if (_isSaving) return;
 
-    setState(() => _isSaving = true);
-
-    final html = AppFlowyEditorHTMLCodec().encode(_editorState.document);
-
-    // Check if text is effectively empty (HTML stripped has no content)
-    final isEffectivelyEmpty = html.replaceAll(RegExp(r'<[^>]+>'), '').trim().isEmpty;
-    if (isEffectivelyEmpty) {
-      setState(() => _isSaving = false);
-      var buildContext = context;
-      if (buildContext.mounted) {
-        ScaffoldMessenger.of(buildContext).showSnackBar(
+    // Check if document is empty before saving state
+    if (_isDocumentEmpty(_editorState.document)) {
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text(
-              AppLocalizations.of(buildContext).commentCannotBeEmpty,
-            ),
+            content: Text(AppLocalizations.of(context).commentCannotBeEmpty),
           ),
         );
       }
       return;
     }
+
+    setState(() => _isSaving = true);
+
+    final html = documentToHTML(_editorState.document);
 
     final controller = ref.read(
       taskCommentsControllerProvider(widget.taskId).notifier,
@@ -86,6 +90,15 @@ class _CommentEditPageState extends ConsumerState<CommentEditPage> {
         ),
       );
     }
+  }
+
+  bool _isDocumentEmpty(Document doc) {
+    for (final node in doc.root.children) {
+      final text = node.delta?.toPlainText().trim() ?? '';
+      if (text.isNotEmpty) return false;
+      if (node.type != ParagraphBlockKeys.type) return false;
+    }
+    return true;
   }
 
   @override

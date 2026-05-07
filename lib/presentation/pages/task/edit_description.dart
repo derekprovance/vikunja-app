@@ -17,10 +17,19 @@ class EditDescriptionState extends State<EditDescription> {
   @override
   void initState() {
     super.initState();
-    final doc = (widget.initialText?.trim().isNotEmpty ?? false)
-        ? AppFlowyEditorHTMLCodec().decode(widget.initialText!)
-        : EditorState.blank().document;
-    _editorState = EditorState(document: doc);
+    _editorState = EditorState(document: _initialDocument(widget.initialText));
+  }
+
+  Document _initialDocument(String? raw) {
+    if (raw == null || raw.trim().isEmpty) {
+      return Document.blank(withInitialText: true);
+    }
+    try {
+      return htmlToDocument(raw);
+    } catch (e, st) {
+      debugPrintStack(stackTrace: st, label: 'Failed to decode task description HTML');
+      return Document.blank(withInitialText: true);
+    }
   }
 
   @override
@@ -30,7 +39,7 @@ class EditDescriptionState extends State<EditDescription> {
   }
 
   void _save() {
-    final html = AppFlowyEditorHTMLCodec().encode(_editorState.document);
+    final html = documentToHTML(_editorState.document);
     if (!context.mounted) return;
     Navigator.pop(context, html);
   }
