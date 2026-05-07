@@ -76,70 +76,24 @@ class _TaskDetailPageState extends ConsumerState<TaskDetailPage> {
   Widget _buildTaskHeader(ThemeData theme, AppLocalizations l10n) {
     return Padding(
       padding: const EdgeInsets.only(bottom: 16),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Expanded(
-            child: AnimatedDefaultTextStyle(
-              duration: const Duration(milliseconds: 200),
-              style: theme.textTheme.headlineSmall!.copyWith(
-                decoration: _task.done
-                    ? TextDecoration.lineThrough
-                    : TextDecoration.none,
-                decorationColor: theme.colorScheme.onSurface.withValues(
-                  alpha: 0.45,
-                ),
-                color: _task.done
-                    ? theme.colorScheme.onSurface.withValues(alpha: 0.45)
-                    : theme.colorScheme.onSurface,
-              ),
-              child: Text(
-                _task.title,
-                maxLines: 3,
-                overflow: TextOverflow.ellipsis,
-              ),
-            ),
+      child: AnimatedDefaultTextStyle(
+        duration: const Duration(milliseconds: 200),
+        style: theme.textTheme.headlineSmall!.copyWith(
+          decoration: _task.done
+              ? TextDecoration.lineThrough
+              : TextDecoration.none,
+          decorationColor: theme.colorScheme.onSurface.withValues(
+            alpha: 0.45,
           ),
-          const SizedBox(width: 12),
-          Tooltip(
-            message: l10n.done,
-            child: InkWell(
-              onTap: _isTogglingDone ? null : _toggleDone,
-              borderRadius: BorderRadius.circular(22),
-              child: AnimatedOpacity(
-                opacity: _isTogglingDone ? 0.6 : 1.0,
-                duration: const Duration(milliseconds: 150),
-                child: AnimatedContainer(
-                  duration: const Duration(milliseconds: 300),
-                  curve: Curves.easeOut,
-                  width: 44,
-                  height: 44,
-                  decoration: BoxDecoration(
-                    shape: BoxShape.circle,
-                    border: Border.all(
-                      color: theme.colorScheme.primary,
-                      width: 2,
-                    ),
-                    color: _task.done
-                        ? theme.colorScheme.primary
-                        : Colors.transparent,
-                  ),
-                  child: AnimatedSwitcher(
-                    duration: const Duration(milliseconds: 200),
-                    child: _task.done
-                        ? Icon(
-                            Icons.check,
-                            key: const ValueKey('check'),
-                            color: theme.colorScheme.onPrimary,
-                            size: 22,
-                          )
-                        : const SizedBox.shrink(key: ValueKey('empty')),
-                  ),
-                ),
-              ),
-            ),
-          ),
-        ],
+          color: _task.done
+              ? theme.colorScheme.onSurface.withValues(alpha: 0.45)
+              : theme.colorScheme.onSurface,
+        ),
+        child: Text(
+          _task.title,
+          maxLines: 3,
+          overflow: TextOverflow.ellipsis,
+        ),
       ),
     );
   }
@@ -159,6 +113,13 @@ class _TaskDetailPageState extends ConsumerState<TaskDetailPage> {
           backgroundColor: _task.effectiveColor,
           foregroundColor: _task.textColor,
           title: Text(l10n.taskDetail),
+          actions: [
+            IconButton(
+              icon: const Icon(Icons.edit_outlined),
+              tooltip: l10n.edit,
+              onPressed: _openEdit,
+            ),
+          ],
         ),
         body: ListView(
           padding: const EdgeInsets.fromLTRB(16, 16, 16, 80),
@@ -166,9 +127,9 @@ class _TaskDetailPageState extends ConsumerState<TaskDetailPage> {
         ),
         floatingActionButton: FloatingActionButton(
           heroTag: null,
-          onPressed: _openEdit,
-          tooltip: l10n.edit,
-          child: const Icon(Icons.edit_outlined),
+          onPressed: _isTogglingDone ? null : _toggleDone,
+          tooltip: _task.done ? l10n.showDoneTasks : l10n.done,
+          child: Icon(_task.done ? Icons.check_circle : Icons.radio_button_unchecked),
         ),
       ),
     );
