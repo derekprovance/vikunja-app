@@ -82,18 +82,12 @@ class _TaskDetailPageState extends ConsumerState<TaskDetailPage> {
           decoration: _task.done
               ? TextDecoration.lineThrough
               : TextDecoration.none,
-          decorationColor: theme.colorScheme.onSurface.withValues(
-            alpha: 0.45,
-          ),
+          decorationColor: theme.colorScheme.onSurface.withValues(alpha: 0.45),
           color: _task.done
               ? theme.colorScheme.onSurface.withValues(alpha: 0.45)
               : theme.colorScheme.onSurface,
         ),
-        child: Text(
-          _task.title,
-          maxLines: 3,
-          overflow: TextOverflow.ellipsis,
-        ),
+        child: Text(_task.title, maxLines: 3, overflow: TextOverflow.ellipsis),
       ),
     );
   }
@@ -125,11 +119,17 @@ class _TaskDetailPageState extends ConsumerState<TaskDetailPage> {
           padding: const EdgeInsets.fromLTRB(16, 16, 16, 80),
           children: _buildContent(context, l10n, theme),
         ),
-        floatingActionButton: FloatingActionButton(
-          heroTag: null,
-          onPressed: _isTogglingDone ? null : _toggleDone,
-          tooltip: _task.done ? l10n.showDoneTasks : l10n.done,
-          child: Icon(_task.done ? Icons.check_circle : Icons.radio_button_unchecked),
+        floatingActionButton: AnimatedOpacity(
+          opacity: _isTogglingDone ? 0.6 : 1.0,
+          duration: const Duration(milliseconds: 150),
+          child: FloatingActionButton(
+            heroTag: null,
+            onPressed: _isTogglingDone ? null : _toggleDone,
+            tooltip: _task.done ? l10n.markAsUndone : l10n.markAsDone,
+            child: Icon(
+              _task.done ? Icons.check_circle : Icons.radio_button_unchecked,
+            ),
+          ),
         ),
       ),
     );
@@ -142,7 +142,6 @@ class _TaskDetailPageState extends ConsumerState<TaskDetailPage> {
   ) {
     final widgets = <Widget>[];
 
-    // Task title + done checkmark
     widgets.add(_buildTaskHeader(theme, l10n));
 
     // Future slot: status chips (todo/in-progress/done) go here when API supports it

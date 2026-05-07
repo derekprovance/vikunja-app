@@ -6,6 +6,8 @@
   "edit": "Edit",
   "save": "Save",
   "done": "Done",
+  "markAsDone": "Mark as done",
+  "markAsUndone": "Mark as not done",
   "progress": "Progress",
   "taskDetail": "Task Detail",
   "@taskDetail": {
@@ -197,6 +199,7 @@
   },
   "removeLimit": "Remove Limit",
   "projectSection": "Projects",
+  "subProjectSection": "Sub-projects",
   "tasksSection": "Tasks",
   "noTasksOrSubproject": "No tasks or sub project in this project",
   "priorityUnset": "Unset",
@@ -258,5 +261,9 @@
     "placeholders": {
       "count": { "type": "int" }
     }
-  }
+  },
+  "settingsAppearanceSection": "Appearance",
+  "settingsNetworkSection": "Network & Sync",
+  "settingsNotificationsSection": "Notifications & Version",
+  "settingsAccountSection": "Account"
 }
