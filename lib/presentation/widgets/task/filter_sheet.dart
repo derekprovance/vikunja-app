@@ -17,65 +17,30 @@ class FilterSheet extends ConsumerStatefulWidget {
 }
 
 class _FilterSheetState extends ConsumerState<FilterSheet> {
-  Set<int> _selectedPriorities = {};
-  Set<int> _selectedProjectIds = {};
-  DueDateFilter? _selectedDueDateFilter;
-
-  @override
-  void initState() {
-    super.initState();
-    _initializeFilter();
-  }
-
-  Future<void> _initializeFilter() async {
-    try {
-      final currentFilter = await ref
-          .read(taskFilterControllerProvider(widget.pageKey).future);
-      if (mounted) {
-        setState(() {
-          _selectedPriorities = Set.from(currentFilter.priorities);
-          _selectedProjectIds = Set.from(currentFilter.projectIds);
-          _selectedDueDateFilter = currentFilter.dueDateFilter;
-        });
-      }
-    } catch (_) {
-      if (mounted) {
-        setState(() {
-          _selectedPriorities = {};
-          _selectedProjectIds = {};
-          _selectedDueDateFilter = null;
-        });
-      }
-    }
-  }
-
-  void _saveFilter() {
-    final updated = TaskFilter(
-      priorities: _selectedPriorities,
-      projectIds: _selectedProjectIds,
-      dueDateFilter: _selectedDueDateFilter,
-    );
+  void _saveFilter(TaskFilter filter) {
+    final messenger = ScaffoldMessenger.of(context);
+    final l10n = AppLocalizations.of(context);
     ref.read(taskFilterControllerProvider(widget.pageKey).notifier)
-        .updateFilter(updated);
+        .updateFilter(filter)
+        .catchError((_) {
+          if (!mounted) return;
+          messenger.showSnackBar(
+            SnackBar(content: Text(l10n.somethingWentWrong)),
+          );
+        });
   }
 
   void _clearFilter() {
-    setState(() {
-      _selectedPriorities = {};
-      _selectedProjectIds = {};
-      _selectedDueDateFilter = null;
-    });
-    _saveFilter();
+    ref.read(taskFilterControllerProvider(widget.pageKey).notifier).clearFilter();
   }
-
-  bool get _isActive =>
-      _selectedPriorities.isNotEmpty ||
-      _selectedProjectIds.isNotEmpty ||
-      _selectedDueDateFilter != null;
 
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
+    final filter = ref.watch(taskFilterControllerProvider(widget.pageKey)).maybeWhen(
+      data: (f) => f,
+      orElse: () => TaskFilter.empty,
+    );
 
     return Column(
       mainAxisSize: MainAxisSize.min,
@@ -105,7 +70,7 @@ class _FilterSheetState extends ConsumerState<FilterSheet> {
                 l10n.filterTasks,
                 style: Theme.of(context).textTheme.titleMedium,
               ),
-              if (_isActive)
+              if (filter.isActive)
                 TextButton(
                   onPressed: _clearFilter,
                   child: Text(l10n.filterClearAll),
@@ -133,16 +98,19 @@ class _FilterSheetState extends ConsumerState<FilterSheet> {
                     children: List.generate(5, (i) {
                       final priority = i + 1;
                       return FilterChip(
-                        selected: _selectedPriorities.contains(priority),
+                        selected: filter.priorities.contains(priority),
                         onSelected: (selected) {
-                          setState(() {
-                            if (selected) {
-                              _selectedPriorities.add(priority);
-                            } else {
-                              _selectedPriorities.remove(priority);
-                            }
-                          });
-                          _saveFilter();
+                          final newPriorities = Set<int>.from(filter.priorities);
+                          if (selected) {
+                            newPriorities.add(priority);
+                          } else {
+                            newPriorities.remove(priority);
+                          }
+                          _saveFilter(TaskFilter(
+                            priorities: newPriorities,
+                            projectIds: filter.projectIds,
+                            dueDateFilter: filter.dueDateFilter,
+                          ));
                         },
                         label: PriorityBatch(priority),
                       );
@@ -155,17 +123,17 @@ class _FilterSheetState extends ConsumerState<FilterSheet> {
                     spacing: 8,
                     runSpacing: 4,
                     children: DueDateFilter.values
-                        .map((filter) => ChoiceChip(
-                              selected: _selectedDueDateFilter == filter,
+                        .map((ddf) => ChoiceChip(
+                              selected: filter.dueDateFilter == ddf,
                               onSelected: (selected) {
-                                setState(() {
-                                  _selectedDueDateFilter =
-                                      selected ? filter : null;
-                                });
-                                _saveFilter();
+                                _saveFilter(TaskFilter(
+                                  priorities: filter.priorities,
+                                  projectIds: filter.projectIds,
+                                  dueDateFilter: selected ? ddf : null,
+                                ));
                               },
                               label: Text(
-                                _getDueDateLabel(context, filter),
+                                _getDueDateLabel(context, ddf),
                               ),
                             ))
                         .toList(),
@@ -174,7 +142,7 @@ class _FilterSheetState extends ConsumerState<FilterSheet> {
                   // Projects Section (only in All Tasks view)
                   if (widget.pageKey == TaskFilterScope.allTasks) ...[
                     _buildSectionLabel(context, l10n.filterProjects),
-                    _buildProjectSection(ref),
+                    _buildProjectSection(filter.projectIds),
                   ],
                 ],
               ),
@@ -211,7 +179,7 @@ class _FilterSheetState extends ConsumerState<FilterSheet> {
     }
   }
 
-  Widget _buildProjectSection(WidgetRef ref) {
+  Widget _buildProjectSection(Set<int> selectedProjectIds) {
     final projectsAsync = ref.watch(projectsControllerProvider);
     return projectsAsync.when(
       loading: () => const Padding(
@@ -237,16 +205,25 @@ class _FilterSheetState extends ConsumerState<FilterSheet> {
           runSpacing: 4,
           children: allProjects
               .map((project) => FilterChip(
-                    selected: _selectedProjectIds.contains(project.id),
+                    selected: selectedProjectIds.contains(project.id),
                     onSelected: (selected) {
-                      setState(() {
-                        if (selected) {
-                          _selectedProjectIds.add(project.id);
-                        } else {
-                          _selectedProjectIds.remove(project.id);
-                        }
-                      });
-                      _saveFilter();
+                      final newProjectIds = Set<int>.from(selectedProjectIds);
+                      if (selected) {
+                        newProjectIds.add(project.id);
+                      } else {
+                        newProjectIds.remove(project.id);
+                      }
+                      final filter = ref
+                          .read(taskFilterControllerProvider(widget.pageKey))
+                          .maybeWhen(
+                            data: (f) => f,
+                            orElse: () => TaskFilter.empty,
+                          );
+                      _saveFilter(TaskFilter(
+                        priorities: filter.priorities,
+                        projectIds: newProjectIds,
+                        dueDateFilter: filter.dueDateFilter,
+                      ));
                     },
                     label: Text(project.title, overflow: TextOverflow.ellipsis),
                   ))
@@ -256,11 +233,14 @@ class _FilterSheetState extends ConsumerState<FilterSheet> {
     );
   }
 
-  List<Project> _flattenProjects(Iterable<Project> projects) {
+  List<Project> _flattenProjects(Iterable<Project> projects, [Set<int>? seen]) {
+    seen ??= {};
     final result = <Project>[];
     for (final p in projects) {
-      result.add(p);
-      result.addAll(_flattenProjects(p.subprojects));
+      if (seen.add(p.id)) {
+        result.add(p);
+        result.addAll(_flattenProjects(p.subprojects, seen));
+      }
     }
     return result;
   }

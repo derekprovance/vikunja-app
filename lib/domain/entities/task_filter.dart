@@ -20,13 +20,11 @@ enum DueDateFilter {
 
 class TaskFilter {
   final Set<int> priorities;
-  final Set<int> labelIds;
   final Set<int> projectIds;
   final DueDateFilter? dueDateFilter;
 
   const TaskFilter({
     this.priorities = const {},
-    this.labelIds = const {},
     this.projectIds = const {},
     this.dueDateFilter,
   });
@@ -38,7 +36,6 @@ class TaskFilter {
 
   Map<String, dynamic> toJson() => {
     'priorities': priorities.toList(),
-    'labelIds': labelIds.toList(),
     'projectIds': projectIds.toList(),
     if (dueDateFilter != null) 'dueDateFilter': dueDateFilter!.name,
   };
@@ -56,7 +53,6 @@ class TaskFilter {
     }
     return TaskFilter(
       priorities: Set<int>.from((json['priorities'] as List? ?? []).cast<int>()),
-      labelIds: Set<int>.from((json['labelIds'] as List? ?? []).cast<int>()),
       projectIds: Set<int>.from((json['projectIds'] as List? ?? []).cast<int>()),
       dueDateFilter: dateFilter,
     );
@@ -103,14 +99,12 @@ class TaskFilter {
       other is TaskFilter &&
           runtimeType == other.runtimeType &&
           setEquals(priorities, other.priorities) &&
-          setEquals(labelIds, other.labelIds) &&
           setEquals(projectIds, other.projectIds) &&
           dueDateFilter == other.dueDateFilter;
 
   @override
   int get hashCode => Object.hash(
         Object.hashAllUnordered(priorities),
-        Object.hashAllUnordered(labelIds),
         Object.hashAllUnordered(projectIds),
         dueDateFilter,
       );
