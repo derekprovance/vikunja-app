@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:vikunja_app/domain/entities/project.dart';
 import 'package:vikunja_app/domain/entities/task_filter.dart';
 import 'package:vikunja_app/l10n/gen/app_localizations.dart';
+import 'package:vikunja_app/main.dart' show globalSnackbarKey;
 import 'package:vikunja_app/presentation/manager/projects_controller.dart';
 import 'package:vikunja_app/presentation/manager/task_filter_controller.dart';
 import 'package:vikunja_app/presentation/widgets/project/kanban/priority_batch.dart';
@@ -17,21 +18,23 @@ class FilterSheet extends ConsumerStatefulWidget {
 }
 
 class _FilterSheetState extends ConsumerState<FilterSheet> {
-  void _saveFilter(TaskFilter filter) {
-    final messenger = ScaffoldMessenger.of(context);
+  Future<void> _saveFilter(TaskFilter filter) async {
     final l10n = AppLocalizations.of(context);
-    ref.read(taskFilterControllerProvider(widget.pageKey).notifier)
-        .updateFilter(filter)
-        .catchError((_) {
-          if (!mounted) return;
-          messenger.showSnackBar(
-            SnackBar(content: Text(l10n.somethingWentWrong)),
-          );
-        });
+    try {
+      await ref
+          .read(taskFilterControllerProvider(widget.pageKey).notifier)
+          .updateFilter(filter);
+    } catch (_) {
+      if (!mounted) return;
+      // Use global snackbar key to ensure the message appears even if the sheet is dismissed
+      globalSnackbarKey.currentState?.showSnackBar(
+        SnackBar(content: Text(l10n.somethingWentWrong)),
+      );
+    }
   }
 
   void _clearFilter() {
-    ref.read(taskFilterControllerProvider(widget.pageKey).notifier).clearFilter();
+    _saveFilter(TaskFilter.empty);
   }
 
   @override
@@ -142,7 +145,7 @@ class _FilterSheetState extends ConsumerState<FilterSheet> {
                   // Projects Section (only in All Tasks view)
                   if (widget.pageKey == TaskFilterScope.allTasks) ...[
                     _buildSectionLabel(context, l10n.filterProjects),
-                    _buildProjectSection(filter.projectIds),
+                    _buildProjectSection(filter),
                   ],
                 ],
               ),
@@ -163,9 +166,9 @@ class _FilterSheetState extends ConsumerState<FilterSheet> {
     );
   }
 
-  String _getDueDateLabel(BuildContext context, DueDateFilter filter) {
+  String _getDueDateLabel(BuildContext context, DueDateFilter dueDateFilter) {
     final l10n = AppLocalizations.of(context);
-    switch (filter) {
+    switch (dueDateFilter) {
       case DueDateFilter.overdue:
         return l10n.overdue;
       case DueDateFilter.today:
@@ -179,7 +182,7 @@ class _FilterSheetState extends ConsumerState<FilterSheet> {
     }
   }
 
-  Widget _buildProjectSection(Set<int> selectedProjectIds) {
+  Widget _buildProjectSection(TaskFilter filter) {
     final projectsAsync = ref.watch(projectsControllerProvider);
     return projectsAsync.when(
       loading: () => const Padding(
@@ -205,20 +208,14 @@ class _FilterSheetState extends ConsumerState<FilterSheet> {
           runSpacing: 4,
           children: allProjects
               .map((project) => FilterChip(
-                    selected: selectedProjectIds.contains(project.id),
+                    selected: filter.projectIds.contains(project.id),
                     onSelected: (selected) {
-                      final newProjectIds = Set<int>.from(selectedProjectIds);
+                      final newProjectIds = Set<int>.from(filter.projectIds);
                       if (selected) {
                         newProjectIds.add(project.id);
                       } else {
                         newProjectIds.remove(project.id);
                       }
-                      final filter = ref
-                          .read(taskFilterControllerProvider(widget.pageKey))
-                          .maybeWhen(
-                            data: (f) => f,
-                            orElse: () => TaskFilter.empty,
-                          );
                       _saveFilter(TaskFilter(
                         priorities: filter.priorities,
                         projectIds: newProjectIds,
@@ -233,6 +230,8 @@ class _FilterSheetState extends ConsumerState<FilterSheet> {
     );
   }
 
+  // Guard against cycles in malformed server data: a project listed as its own
+  // (transitive) subproject would otherwise recurse infinitely.
   List<Project> _flattenProjects(Iterable<Project> projects, [Set<int>? seen]) {
     seen ??= {};
     final result = <Project>[];
