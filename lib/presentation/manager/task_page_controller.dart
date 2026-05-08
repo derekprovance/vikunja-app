@@ -143,6 +143,11 @@ class TaskPageController extends _$TaskPageController
 
     final filterStrings = <String>["done = false", ...filter.toFilterClauses()];
 
+    final projectClause = filter.toProjectFilterClause();
+    if (projectClause != null) {
+      filterStrings.add(projectClause);
+    }
+
     // Legacy: if no explicit due-date filter is set, fall back to the old
     // "only due date tasks" toggle so existing user settings are honoured.
     if (filter.dueDateFilter == null) {

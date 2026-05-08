@@ -1,11 +1,11 @@
 import 'dart:async';
 
-import 'package:background_downloader/background_downloader.dart' show TaskStatus, FileDownloader;
+import 'package:background_downloader/background_downloader.dart'
+    show TaskStatus, FileDownloader;
 import 'package:collection/collection.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_colorpicker/flutter_colorpicker.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:flutter_widget_from_html/flutter_widget_from_html.dart';
 import 'package:vikunja_app/core/di/network_provider.dart';
 import 'package:vikunja_app/core/di/repository_provider.dart';
 import 'package:vikunja_app/core/utils/priority.dart';
@@ -18,12 +18,10 @@ import 'package:vikunja_app/l10n/gen/app_localizations.dart';
 import 'package:vikunja_app/presentation/manager/task_page_controller.dart';
 import 'package:vikunja_app/presentation/manager/projects_controller.dart';
 import 'package:vikunja_app/presentation/pages/task/task_page_result.dart';
-import 'package:vikunja_app/presentation/pages/task/edit_description.dart';
 import 'package:vikunja_app/presentation/widgets/date_time_field.dart';
 import 'package:vikunja_app/presentation/widgets/label_widget.dart';
 import 'package:vikunja_app/presentation/widgets/project/project_picker_sheet.dart';
 import 'package:vikunja_app/presentation/widgets/task/color_picker_dialog.dart';
-import 'package:vikunja_app/presentation/widgets/task/task_delete_dialog.dart';
 
 class TaskEditPage extends ConsumerStatefulWidget {
   final Task task;
@@ -37,7 +35,7 @@ class TaskEditPage extends ConsumerStatefulWidget {
 class TaskEditPageState extends ConsumerState<TaskEditPage> {
   final _formKey = GlobalKey<FormState>();
 
-  String? _title, _description;
+  String? _title;
   DateTime? _dueDate, _startDate, _endDate;
   int _repeatAfterValue = 0;
   RepeatAfterUnit _repeatAfterUnit = RepeatAfterUnit.days;
@@ -73,7 +71,6 @@ class TaskEditPageState extends ConsumerState<TaskEditPage> {
 
     _priority = widget.task.priority;
     _projectId = widget.task.projectId;
-    _description = widget.task.description;
     _color = widget.task.color;
 
     _dueDate = widget.task.dueDate;
@@ -82,7 +79,9 @@ class TaskEditPageState extends ConsumerState<TaskEditPage> {
 
     _percentDone = widget.task.percentDone ?? 0.0;
 
-    _repeatAfterValue = getRepeatAfterValueFromDuration(widget.task.repeatAfter);
+    _repeatAfterValue = getRepeatAfterValueFromDuration(
+      widget.task.repeatAfter,
+    );
     _repeatAfterUnit = getRepeatAfterTypeFromDuration(widget.task.repeatAfter);
 
     _titleFocusNode.addListener(() {
@@ -123,8 +122,9 @@ class TaskEditPageState extends ConsumerState<TaskEditPage> {
           }
         } finally {
           if (mounted) {
-            Navigator.of(context)
-                .pop(_lastSavedTask != null ? TaskEdited(_lastSavedTask!) : null);
+            Navigator.of(
+              context,
+            ).pop(_lastSavedTask != null ? TaskEdited(_lastSavedTask!) : null);
           }
         }
       },
@@ -147,42 +147,7 @@ class TaskEditPageState extends ConsumerState<TaskEditPage> {
               ),
             ),
           ),
-        IconButton(icon: Icon(Icons.delete), onPressed: _isSaving ? null : showDeleteConfirmDialog),
       ],
-    );
-  }
-
-  void showDeleteConfirmDialog() {
-    showDialog(
-      context: context,
-      builder: (BuildContext context) {
-        return TaskDeleteDialog(
-          widget.task.id,
-          onConfirm: () async {
-            var success = await ref
-                .read(taskPageControllerProvider.notifier)
-                .deleteTask(widget.task.id);
-
-            if (context.mounted) {
-              if (success) {
-                final messenger = ScaffoldMessenger.of(context);
-                Navigator.of(context).pop();
-                Navigator.of(context).pop(const TaskDeleted());
-                messenger.showSnackBar(
-                  SnackBar(content: Text(AppLocalizations.of(context).taskDeleteSuccess)),
-                );
-              } else {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(content: Text(AppLocalizations.of(context).taskDeleteError)),
-                );
-              }
-            }
-          },
-          onCancel: () {
-            Navigator.of(context).pop();
-          },
-        );
-      },
     );
   }
 
@@ -194,7 +159,6 @@ class TaskEditPageState extends ConsumerState<TaskEditPage> {
         children: <Widget>[
           _buildTitle(),
           _buildProject(),
-          _buildDescription(context),
           _buildDueDate(),
           _buildStartDate(),
           _buildEndDate(),
@@ -241,8 +205,12 @@ class TaskEditPageState extends ConsumerState<TaskEditPage> {
       ),
       error: (_, _) => const SizedBox.shrink(),
       data: (model) {
-        final flatProjects = model.projects.expand((p) => _flattenProject(p, depth: 0)).toList();
-        final currentProject = flatProjects.firstWhereOrNull((p) => p.id == _projectId);
+        final flatProjects = model.projects
+            .expand((p) => _flattenProject(p, depth: 0))
+            .toList();
+        final currentProject = flatProjects.firstWhereOrNull(
+          (p) => p.id == _projectId,
+        );
 
         return Padding(
           padding: const EdgeInsets.symmetric(vertical: 8.0),
@@ -278,59 +246,10 @@ class TaskEditPageState extends ConsumerState<TaskEditPage> {
   List<dynamic> _flattenProject(dynamic project, {required int depth}) {
     return [
       project,
-      ...project.subprojects.expand((sub) => _flattenProject(sub, depth: depth + 1)),
-    ];
-  }
-
-  Widget _buildDescription(BuildContext context) {
-    return Padding(
-      padding: EdgeInsets.symmetric(vertical: 8.0),
-      child: InkWell(
-        onTap: () async {
-          var description = await Navigator.push<String>(
-            context,
-            MaterialPageRoute(
-              builder: (buildContext) => EditDescription(initialText: _description),
-            ),
-          );
-          if (description != null) {
-            setState(() {
-              _description = description;
-            });
-            unawaited(_autoSave());
-          }
-        },
-        child: Row(
-          mainAxisSize: MainAxisSize.max,
-          children: [
-            Icon(Icons.description_outlined),
-            Expanded(
-              child: Padding(
-                padding: const EdgeInsets.only(left: 16.0),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Text(
-                      AppLocalizations.of(context).description,
-                      style: Theme.of(context).textTheme.labelMedium?.copyWith(
-                        color: Theme.of(context).hintColor,
-                        fontWeight: FontWeight.normal,
-                      ),
-                    ),
-                    HtmlWidget(
-                      _description != null && _description?.isNotEmpty == true
-                          ? _description!
-                          : AppLocalizations.of(context).noDescription,
-                    ),
-                  ],
-                ),
-              ),
-            ),
-          ],
-        ),
+      ...project.subprojects.expand(
+        (sub) => _flattenProject(sub, depth: depth + 1),
       ),
-    );
+    ];
   }
 
   Widget _buildDueDate() {
@@ -388,7 +307,9 @@ class TaskEditPageState extends ConsumerState<TaskEditPage> {
             child: TextFormField(
               keyboardType: TextInputType.number,
               focusNode: _repeatValueFocusNode,
-              initialValue: getRepeatAfterValueFromDuration(widget.task.repeatAfter).toString(),
+              initialValue: getRepeatAfterValueFromDuration(
+                widget.task.repeatAfter,
+              ).toString(),
               onChanged: (newValue) {
                 _repeatAfterValue = int.tryParse(newValue) ?? 0;
                 _scheduleAutoSave();
@@ -417,14 +338,16 @@ class TaskEditPageState extends ConsumerState<TaskEditPage> {
                   _autoSave();
                 }
               },
-              items: RepeatAfterUnit.values.map<DropdownMenuItem<RepeatAfterUnit>>((
-                RepeatAfterUnit value,
-              ) {
-                return DropdownMenuItem<RepeatAfterUnit>(
-                  value: value,
-                  child: Text(value.toLocalizedString(context)),
-                );
-              }).toList(),
+              items: RepeatAfterUnit.values
+                  .map<DropdownMenuItem<RepeatAfterUnit>>((
+                    RepeatAfterUnit value,
+                  ) {
+                    return DropdownMenuItem<RepeatAfterUnit>(
+                      value: value,
+                      child: Text(value.toLocalizedString(context)),
+                    );
+                  })
+                  .toList(),
             ),
           ),
         ],
@@ -517,7 +440,10 @@ class TaskEditPageState extends ConsumerState<TaskEditPage> {
         children: [
           Padding(
             padding: const EdgeInsets.only(right: 15, left: 2),
-            child: Icon(Icons.percent, color: Theme.of(context).colorScheme.onSurfaceVariant),
+            child: Icon(
+              Icons.percent,
+              color: Theme.of(context).colorScheme.onSurfaceVariant,
+            ),
           ),
           Expanded(
             child: Column(
@@ -525,9 +451,9 @@ class TaskEditPageState extends ConsumerState<TaskEditPage> {
               children: [
                 Text(
                   AppLocalizations.of(context).progress,
-                  style: Theme.of(
-                    context,
-                  ).textTheme.labelMedium?.copyWith(color: Theme.of(context).hintColor),
+                  style: Theme.of(context).textTheme.labelMedium?.copyWith(
+                    color: Theme.of(context).hintColor,
+                  ),
                 ),
                 Slider(
                   value: _percentDone,
@@ -548,7 +474,10 @@ class TaskEditPageState extends ConsumerState<TaskEditPage> {
               ],
             ),
           ),
-          SizedBox(width: 40, child: Text(percentText, textAlign: TextAlign.end)),
+          SizedBox(
+            width: 40,
+            child: Text(percentText, textAlign: TextAlign.end),
+          ),
         ],
       ),
     );
@@ -561,10 +490,16 @@ class TaskEditPageState extends ConsumerState<TaskEditPage> {
         children: <Widget>[
           Padding(
             padding: const EdgeInsets.only(right: 15, left: 2),
-            child: Icon(Icons.label, color: Theme.of(context).colorScheme.onSurfaceVariant),
+            child: Icon(
+              Icons.label,
+              color: Theme.of(context).colorScheme.onSurfaceVariant,
+            ),
           ),
           SizedBox(
-            width: MediaQuery.of(context).size.width - 80 - ((IconTheme.of(context).size ?? 0) * 2),
+            width:
+                MediaQuery.of(context).size.width -
+                80 -
+                ((IconTheme.of(context).size ?? 0) * 2),
             child: Autocomplete<String>(
               optionsBuilder: (TextEditingValue textEditingValue) {
                 if (textEditingValue.text == '') {
@@ -596,7 +531,8 @@ class TaskEditPageState extends ConsumerState<TaskEditPage> {
             ),
           ),
           IconButton(
-            onPressed: () => unawaited(_createAndAddLabel(_labelTypeAheadController.text)),
+            onPressed: () =>
+                unawaited(_createAndAddLabel(_labelTypeAheadController.text)),
             icon: Icon(Icons.add),
           ),
         ],
@@ -612,7 +548,10 @@ class TaskEditPageState extends ConsumerState<TaskEditPage> {
         children: <Widget>[
           Padding(
             padding: const EdgeInsets.only(right: 15, left: 2),
-            child: Icon(Icons.palette, color: theme.colorScheme.onSurfaceVariant),
+            child: Icon(
+              Icons.palette,
+              color: theme.colorScheme.onSurfaceVariant,
+            ),
           ),
           FilledButton.tonal(
             style: (_color == null || _color == Colors.black)
@@ -624,17 +563,23 @@ class TaskEditPageState extends ConsumerState<TaskEditPage> {
               style: (_color == null || _color == Colors.black)
                   ? null
                   : TextStyle(
-                      color: _color!.computeLuminance() > 0.5 ? Colors.black : Colors.white,
+                      color: _color!.computeLuminance() > 0.5
+                          ? Colors.black
+                          : Colors.white,
                     ),
             ),
           ),
           Padding(
             padding: const EdgeInsets.only(left: 15),
             child: () {
-              Color? color = (_color == null || _color == Colors.black) ? null : _color;
+              Color? color = (_color == null || _color == Colors.black)
+                  ? null
+                  : _color;
 
               return Text(
-                color != null ? "#${color.toHexString()}" : AppLocalizations.of(context).none,
+                color != null
+                    ? "#${color.toHexString()}"
+                    : AppLocalizations.of(context).none,
                 style: TextStyle(
                   color: theme.colorScheme.onSurfaceVariant,
                   fontStyle: FontStyle.italic,
@@ -661,7 +606,10 @@ class TaskEditPageState extends ConsumerState<TaskEditPage> {
             onPressed: () async {
               var taskId = await ref
                   .read(taskRepositoryProvider)
-                  .downloadAttachment(widget.task.id, widget.task.attachments[index]);
+                  .downloadAttachment(
+                    widget.task.id,
+                    widget.task.attachments[index],
+                  );
               if (taskId.status == TaskStatus.complete) {
                 FileDownloader().openFile(task: taskId.task);
               }
@@ -677,19 +625,26 @@ class TaskEditPageState extends ConsumerState<TaskEditPage> {
       spacing: 10,
       children:
           _labels?.map((label) {
-            return LabelWidget(label: label, onDelete: () => _removeLabel(label));
+            return LabelWidget(
+              label: label,
+              onDelete: () => _removeLabel(label),
+            );
           }).toList() ??
           [],
     );
   }
 
   Future<List<String>> _searchLabel(String query) async {
-    var labelsResponse = await ref.read(labelRepositoryProvider).getAll(query: query);
+    var labelsResponse = await ref
+        .read(labelRepositoryProvider)
+        .getAll(query: query);
 
     if (labelsResponse.isSuccessful) {
       var labels = labelsResponse.toSuccess().body;
 
-      labels.removeWhere((labelToRemove) => _labels?.contains(labelToRemove) == true);
+      labels.removeWhere(
+        (labelToRemove) => _labels?.contains(labelToRemove) == true,
+      );
       _suggestedLabels = labels;
 
       return labels.map((e) => e.title).toList();
@@ -698,7 +653,9 @@ class TaskEditPageState extends ConsumerState<TaskEditPage> {
   }
 
   void _addLabel(String labelTitle) {
-    var label = _suggestedLabels?.firstWhereOrNull((e) => e.title == labelTitle);
+    var label = _suggestedLabels?.firstWhereOrNull(
+      (e) => e.title == labelTitle,
+    );
 
     if (label != null) {
       setState(() {
@@ -718,7 +675,9 @@ class TaskEditPageState extends ConsumerState<TaskEditPage> {
 
   Future<void> _createAndAddLabel(String labelTitle) async {
     if (labelTitle.isEmpty ||
-        _suggestedLabels?.firstWhereOrNull((label) => label.title == labelTitle) !=
+        _suggestedLabels?.firstWhereOrNull(
+              (label) => label.title == labelTitle,
+            ) !=
             null) {
       return;
     }
@@ -727,7 +686,9 @@ class TaskEditPageState extends ConsumerState<TaskEditPage> {
     if (currentUser == null) return;
 
     final newLabel = Label(title: labelTitle, createdBy: currentUser);
-    final createdLabel = await ref.read(labelRepositoryProvider).create(newLabel);
+    final createdLabel = await ref
+        .read(labelRepositoryProvider)
+        .create(newLabel);
 
     if (!mounted || !createdLabel.isSuccessful) return;
 
@@ -759,7 +720,12 @@ class TaskEditPageState extends ConsumerState<TaskEditPage> {
 
     setState(() {
       _reminderDates?.add(
-        TaskReminder(selectedDate.copyWith(hour: selectedTime.hour, minute: selectedTime.minute)),
+        TaskReminder(
+          selectedDate.copyWith(
+            hour: selectedTime.hour,
+            minute: selectedTime.minute,
+          ),
+        ),
       );
     });
     _autoSave();
@@ -794,13 +760,14 @@ class TaskEditPageState extends ConsumerState<TaskEditPage> {
   Task _buildCurrentTask() {
     return (widget.task.copyWith(
         title: _title,
-        description: _description,
         reminderDates: _reminderDates,
         priority: _priority,
         projectId: _projectId,
         labels: _labels,
         repeatAfter: _repeatAfterUnit.getDuration(_repeatAfterValue),
-        percentDone: widget.task.percentDone == null && _percentDone == 0.0 ? null : _percentDone,
+        percentDone: widget.task.percentDone == null && _percentDone == 0.0
+            ? null
+            : _percentDone,
       ))
       ..dueDate = _dueDate
       ..startDate = _startDate
@@ -827,10 +794,14 @@ class TaskEditPageState extends ConsumerState<TaskEditPage> {
       return;
     }
 
-    if (_startDate != null && _endDate != null && _endDate!.isBefore(_startDate!)) {
+    if (_startDate != null &&
+        _endDate != null &&
+        _endDate!.isBefore(_startDate!)) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(AppLocalizations.of(context).endDateBeforeStartDate)),
+          SnackBar(
+            content: Text(AppLocalizations.of(context).endDateBeforeStartDate),
+          ),
         );
       }
       return;
@@ -850,9 +821,11 @@ class TaskEditPageState extends ConsumerState<TaskEditPage> {
             .update(updatedTask, _labels!);
         if (!labelResult.isSuccessful) {
           if (mounted) {
-            ScaffoldMessenger.of(
-              context,
-            ).showSnackBar(SnackBar(content: Text(AppLocalizations.of(context).taskSaveError)));
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text(AppLocalizations.of(context).taskSaveError),
+              ),
+            );
           }
           return;
         }
@@ -866,9 +839,9 @@ class TaskEditPageState extends ConsumerState<TaskEditPage> {
         if (saveSuccess) {
           _lastSavedTask = updatedTask;
         } else {
-          ScaffoldMessenger.of(
-            context,
-          ).showSnackBar(SnackBar(content: Text(AppLocalizations.of(context).taskSaveError)));
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text(AppLocalizations.of(context).taskSaveError)),
+          );
         }
       }
     } finally {

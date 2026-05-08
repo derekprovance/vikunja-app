@@ -21,22 +21,25 @@ enum DueDateFilter {
 class TaskFilter {
   final Set<int> priorities;
   final Set<int> labelIds;
+  final Set<int> projectIds;
   final DueDateFilter? dueDateFilter;
 
   const TaskFilter({
     this.priorities = const {},
     this.labelIds = const {},
+    this.projectIds = const {},
     this.dueDateFilter,
   });
 
   static const TaskFilter empty = TaskFilter();
 
   bool get isActive =>
-      priorities.isNotEmpty || labelIds.isNotEmpty || dueDateFilter != null;
+      priorities.isNotEmpty || dueDateFilter != null || projectIds.isNotEmpty;
 
   Map<String, dynamic> toJson() => {
     'priorities': priorities.toList(),
     'labelIds': labelIds.toList(),
+    'projectIds': projectIds.toList(),
     if (dueDateFilter != null) 'dueDateFilter': dueDateFilter!.name,
   };
 
@@ -54,6 +57,7 @@ class TaskFilter {
     return TaskFilter(
       priorities: Set<int>.from((json['priorities'] as List? ?? []).cast<int>()),
       labelIds: Set<int>.from((json['labelIds'] as List? ?? []).cast<int>()),
+      projectIds: Set<int>.from((json['projectIds'] as List? ?? []).cast<int>()),
       dueDateFilter: dateFilter,
     );
   }
@@ -72,10 +76,6 @@ class TaskFilter {
 
     if (priorities.isNotEmpty) {
       clauses.add('(${priorities.map((p) => "priority = $p").join(" || ")})');
-    }
-
-    if (labelIds.isNotEmpty) {
-      clauses.add('(${labelIds.map((id) => "label_id = $id").join(" || ")})');
     }
 
     switch (dueDateFilter) {
@@ -104,12 +104,19 @@ class TaskFilter {
           runtimeType == other.runtimeType &&
           setEquals(priorities, other.priorities) &&
           setEquals(labelIds, other.labelIds) &&
+          setEquals(projectIds, other.projectIds) &&
           dueDateFilter == other.dueDateFilter;
 
   @override
   int get hashCode => Object.hash(
         Object.hashAllUnordered(priorities),
         Object.hashAllUnordered(labelIds),
+        Object.hashAllUnordered(projectIds),
         dueDateFilter,
       );
+
+  String? toProjectFilterClause() {
+    if (projectIds.isEmpty) return null;
+    return '(${projectIds.map((id) => "project_id = $id").join(" || ")})';
+  }
 }

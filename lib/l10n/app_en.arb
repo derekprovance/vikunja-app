@@ -361,5 +361,7 @@
   "filterApply": "Apply",
   "filterLabels": "Labels",
   "filterNoLabels": "No labels available",
+  "filterProjects": "Projects",
+  "filterNoProjects": "No projects available",
   "versionCheckError": "Couldn't get latest version"
 }

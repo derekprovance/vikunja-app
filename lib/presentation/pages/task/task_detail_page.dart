@@ -11,9 +11,12 @@ import 'package:vikunja_app/domain/entities/task.dart';
 import 'package:vikunja_app/l10n/gen/app_localizations.dart';
 import 'package:vikunja_app/presentation/pages/task/task_edit_page.dart';
 import 'package:vikunja_app/presentation/pages/task/task_page_result.dart';
+import 'package:vikunja_app/presentation/pages/task/edit_description.dart';
+import 'package:vikunja_app/presentation/manager/task_page_controller.dart';
 import 'package:vikunja_app/presentation/widgets/label_widget.dart';
 import 'package:vikunja_app/presentation/widgets/task/task_attachment_preview.dart';
 import 'package:vikunja_app/presentation/widgets/task/task_comments.dart';
+import 'package:vikunja_app/presentation/widgets/task/task_delete_dialog.dart';
 import 'package:vikunja_app/presentation/widgets/task/task_relations.dart';
 
 class TaskDetailPage extends ConsumerStatefulWidget {
@@ -49,6 +52,69 @@ class _TaskDetailPageState extends ConsumerState<TaskDetailPage> {
         _modified = true;
       });
     }
+  }
+
+  Future<void> _editDescription() async {
+    final description = await Navigator.push<String>(
+      context,
+      MaterialPageRoute(
+        builder: (_) => EditDescription(initialText: _task.description),
+      ),
+    );
+    if (description != null && mounted) {
+      final updated = _task.copyWith(description: description);
+      final response = await ref.read(taskRepositoryProvider).update(updated);
+      if (response.isSuccessful && mounted) {
+        setState(() {
+          _task = updated;
+          _modified = true;
+        });
+      } else if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(AppLocalizations.of(context).taskSaveError)),
+        );
+      }
+    }
+  }
+
+  void _showDeleteConfirmDialog() {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return TaskDeleteDialog(
+          _task.id,
+          onConfirm: () async {
+            var success = await ref
+                .read(taskPageControllerProvider.notifier)
+                .deleteTask(_task.id);
+
+            if (context.mounted) {
+              if (success) {
+                final messenger = ScaffoldMessenger.of(context);
+                Navigator.of(context).pop();
+                Navigator.of(context).pop(const TaskDeleted());
+                messenger.showSnackBar(
+                  SnackBar(
+                    content: Text(
+                      AppLocalizations.of(context).taskDeleteSuccess,
+                    ),
+                  ),
+                );
+              } else {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: Text(AppLocalizations.of(context).taskDeleteError),
+                  ),
+                );
+              }
+            }
+          },
+          onCancel: () {
+            Navigator.of(context).pop();
+          },
+        );
+      },
+    );
   }
 
   Future<void> _toggleDone() async {
@@ -109,10 +175,37 @@ class _TaskDetailPageState extends ConsumerState<TaskDetailPage> {
           foregroundColor: _task.textColor,
           title: Text(l10n.taskDetail),
           actions: [
-            IconButton(
-              icon: const Icon(Icons.edit_outlined),
-              tooltip: l10n.edit,
-              onPressed: _openEdit,
+            PopupMenuButton<String>(
+              icon: const Icon(Icons.menu),
+              onSelected: (String result) {
+                if (result == 'edit') {
+                  _openEdit();
+                } else if (result == 'delete') {
+                  _showDeleteConfirmDialog();
+                }
+              },
+              itemBuilder: (BuildContext context) => <PopupMenuEntry<String>>[
+                PopupMenuItem<String>(
+                  value: 'edit',
+                  child: Row(
+                    children: [
+                      const Icon(Icons.edit_outlined),
+                      const SizedBox(width: 12),
+                      Text(l10n.edit),
+                    ],
+                  ),
+                ),
+                PopupMenuItem<String>(
+                  value: 'delete',
+                  child: Row(
+                    children: [
+                      const Icon(Icons.delete_outlined),
+                      const SizedBox(width: 12),
+                      Text(l10n.delete),
+                    ],
+                  ),
+                ),
+              ],
             ),
           ],
         ),
@@ -236,21 +329,35 @@ class _TaskDetailPageState extends ConsumerState<TaskDetailPage> {
       widgets.add(const SizedBox(height: 8));
     }
 
-    // Description — only if non-empty
-    if (stripHtml(_task.description).isNotEmpty) {
-      widgets.add(
-        Padding(
-          padding: const EdgeInsets.only(bottom: 4),
-          child: Text(l10n.description, style: theme.textTheme.labelLarge),
+    // Description — always shown, clickable to edit
+    widgets.add(
+      Padding(
+        padding: const EdgeInsets.only(bottom: 4),
+        child: Text(l10n.description, style: theme.textTheme.labelLarge),
+      ),
+    );
+    widgets.add(
+      Padding(
+        padding: const EdgeInsets.only(bottom: 16),
+        child: GestureDetector(
+          onTap: _editDescription,
+          child: Card(
+            child: Padding(
+              padding: const EdgeInsets.all(12),
+              child: stripHtml(_task.description).isEmpty
+                  ? Text(
+                      l10n.noDescription,
+                      style: theme.textTheme.bodyMedium?.copyWith(
+                        color: theme.colorScheme.onSurfaceVariant,
+                        fontStyle: FontStyle.italic,
+                      ),
+                    )
+                  : HtmlWidget(_task.description),
+            ),
+          ),
         ),
-      );
-      widgets.add(
-        Padding(
-          padding: const EdgeInsets.only(bottom: 16, left: 4),
-          child: HtmlWidget(_task.description),
-        ),
-      );
-    }
+      ),
+    );
 
     // Info section at the bottom
     final infoSection = _buildInfoSection(l10n, theme);
