@@ -39,11 +39,13 @@ class TaskPageController extends _$TaskPageController
     resetPagination();
 
     var tasksResponse = await _getAllFiltered();
+    if (!ref.mounted) return;
 
     switch (tasksResponse) {
       case SuccessResponse<List<Task>>():
         updateTotalPages(tasksResponse.headers);
         var pageModel = await _createPageModel(tasksResponse.body);
+        if (!ref.mounted) return;
         state = AsyncData(pageModel);
       case ErrorResponse<List<Task>>():
         state = AsyncError(tasksResponse.error, StackTrace.current);
@@ -90,6 +92,7 @@ class TaskPageController extends _$TaskPageController
         ref.read(currentUserProvider)?.settings?.defaultProjectId ?? 0;
 
     var projectsResponse = await ref.read(projectRepositoryProvider).getAll();
+    if (!ref.mounted) return TaskPageModel(tasks, false, defaultProjectId, false);
 
     _setProjectOfTask(projectsResponse, tasks);
 
