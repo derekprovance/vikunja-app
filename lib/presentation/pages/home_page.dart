@@ -32,13 +32,21 @@ class HomePage extends ConsumerStatefulWidget {
 class HomePageState extends ConsumerState<HomePage> {
   static const platform = MethodChannel('vikunja');
 
-  int _selectedDrawerIndex = 0, _previousDrawerIndex = 0;
-  Widget? drawerItem;
+  int _selectedDrawerIndex = 0;
   NotificationHandler? _notificationHandler;
 
   final GlobalKey<TaskListPageState> _taskListKey =
       GlobalKey<TaskListPageState>();
-  late List<Widget> widgets;
+
+  // Per-tab navigators: each tab has its own Navigator managed by IndexedStack.
+  // In-tab navigation (Navigator.push within tab content) targets the nearest
+  // ancestor Navigator, which is the tab's own navigator. Cross-app navigation
+  // (auth redirects, logout) uses globalNavigatorKey to reach the MaterialApp navigator.
+  final List<GlobalKey<NavigatorState>> _tabNavigatorKeys = [
+    GlobalKey<NavigatorState>(),
+    GlobalKey<NavigatorState>(),
+    GlobalKey<NavigatorState>(),
+  ];
 
   List<NavigationDestination> navbarItems(BuildContext context) => [
     NavigationDestination(
@@ -58,12 +66,6 @@ class HomePageState extends ConsumerState<HomePage> {
   @override
   void initState() {
     super.initState();
-
-    widgets = [
-      TaskListPage(key: _taskListKey),
-      ProjectListPage(),
-      SettingsPage(),
-    ];
 
     Future.delayed(Duration.zero, () {
       scheduleIntent();
@@ -90,36 +92,65 @@ class HomePageState extends ConsumerState<HomePage> {
 
   @override
   Widget build(BuildContext context) {
-    if (_selectedDrawerIndex != _previousDrawerIndex || drawerItem == null) {
-      drawerItem = _getDrawerItemWidget(_selectedDrawerIndex);
-    }
-
-    return Scaffold(
-      bottomNavigationBar: ClipRRect(
-        borderRadius: BorderRadius.only(
-          topLeft: Radius.circular(16),
-          topRight: Radius.circular(16),
+    return PopScope(
+      canPop: false,
+      onPopInvokedWithResult: (didPop, result) async {
+        if (didPop) return;
+        final navigator = _tabNavigatorKeys[_selectedDrawerIndex].currentState;
+        if (navigator == null) return;
+        if (navigator.canPop()) {
+          await navigator.maybePop();
+        } else {
+          await SystemNavigator.pop();
+        }
+      },
+      child: Scaffold(
+        bottomNavigationBar: ClipRRect(
+          borderRadius: const BorderRadius.only(
+            topLeft: Radius.circular(16),
+            topRight: Radius.circular(16),
+          ),
+          child: NavigationBar(
+            destinations: navbarItems(context),
+            selectedIndex: _selectedDrawerIndex,
+            onDestinationSelected: (index) {
+              setState(() {
+                _selectedDrawerIndex = index;
+              });
+              if (index == 0) {
+                _taskListKey.currentState?.resetToAllTasks();
+              }
+            },
+          ),
         ),
-        child: NavigationBar(
-          destinations: navbarItems(context),
-          selectedIndex: _selectedDrawerIndex,
-          onDestinationSelected: (index) {
-            setState(() {
-              _selectedDrawerIndex = index;
-            });
-            if (index == 0) {
-              _taskListKey.currentState?.resetToAllTasks();
-            }
-          },
+        body: IndexedStack(
+          index: _selectedDrawerIndex,
+          children: [
+            Navigator(
+              key: _tabNavigatorKeys[0],
+              onGenerateRoute: (settings) => MaterialPageRoute(
+                builder: (_) => TaskListPage(key: _taskListKey),
+                settings: settings,
+              ),
+            ),
+            Navigator(
+              key: _tabNavigatorKeys[1],
+              onGenerateRoute: (settings) => MaterialPageRoute(
+                builder: (_) => const ProjectListPage(),
+                settings: settings,
+              ),
+            ),
+            Navigator(
+              key: _tabNavigatorKeys[2],
+              onGenerateRoute: (settings) => MaterialPageRoute(
+                builder: (_) => const SettingsPage(),
+                settings: settings,
+              ),
+            ),
+          ],
         ),
       ),
-      body: drawerItem,
     );
-  }
-
-  Widget _getDrawerItemWidget(int pos) {
-    _previousDrawerIndex = pos;
-    return widgets[pos];
   }
 
   void scheduleIntent() async {

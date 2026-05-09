@@ -322,26 +322,26 @@ class TaskListItemState extends State<TaskListItem> {
 
   Widget _buildProjectChip(ThemeData theme) {
     final project = widget.task.project!;
+    final bgColor =
+        project.effectiveColor ?? theme.colorScheme.surfaceContainerHighest;
+    final textColor = bgColor.contrastTextColor;
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
       decoration: BoxDecoration(
-        color: project.color ?? theme.colorScheme.surfaceContainerHighest,
+        color: bgColor,
         borderRadius: const BorderRadius.all(Radius.circular(12)),
         border: Border.all(color: theme.colorScheme.outlineVariant, width: 1),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(
-            Icons.folder_outlined,
-            size: 10,
-            color: theme.colorScheme.onSurfaceVariant,
-          ),
+          Icon(Icons.folder_outlined, size: 10, color: textColor),
           const SizedBox(width: 3),
           Text(
             project.title,
             style: theme.textTheme.labelSmall?.copyWith(
               fontWeight: FontWeight.w500,
+              color: textColor,
             ),
           ),
         ],

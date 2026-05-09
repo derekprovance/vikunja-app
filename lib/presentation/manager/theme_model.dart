@@ -22,6 +22,9 @@ class ThemeModel {
               backgroundColor: lightTheme?.primary,
               foregroundColor: lightTheme?.onPrimary,
             ),
+            inputDecorationTheme: InputDecorationTheme(
+              iconColor: lightTheme?.onSurfaceVariant,
+            ),
             extensions: [
               AppColors(
                 success: MaterialTheme.success.light.colorContainer,
@@ -46,6 +49,9 @@ class ThemeModel {
             appBarTheme: AppBarTheme(
               backgroundColor: darkTheme?.primary,
               foregroundColor: darkTheme?.onPrimary,
+            ),
+            inputDecorationTheme: InputDecorationTheme(
+              iconColor: darkTheme?.onSurfaceVariant,
             ),
             extensions: [
               AppColors(
@@ -72,6 +78,9 @@ class ThemeModel {
         backgroundColor: lightScheme.primary,
         foregroundColor: lightScheme.onPrimary,
       ),
+      inputDecorationTheme: InputDecorationTheme(
+        iconColor: lightScheme.onSurfaceVariant,
+      ),
       extensions: [
         AppColors(
           success: MaterialTheme.success.light.colorContainer,
@@ -95,6 +104,9 @@ class ThemeModel {
       appBarTheme: AppBarTheme(
         backgroundColor: darkScheme.primaryContainer,
         foregroundColor: darkScheme.onPrimaryContainer,
+      ),
+      inputDecorationTheme: InputDecorationTheme(
+        iconColor: darkScheme.onSurfaceVariant,
       ),
       extensions: [
         AppColors(

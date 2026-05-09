@@ -33,7 +33,10 @@ class EditDescriptionState extends State<EditDescription> {
     try {
       return htmlToDocument(raw);
     } catch (e, st) {
-      debugPrintStack(stackTrace: st, label: 'Failed to decode task description HTML');
+      debugPrintStack(
+        stackTrace: st,
+        label: 'Failed to decode task description HTML',
+      );
       return Document.blank(withInitialText: true);
     }
   }
@@ -55,12 +58,11 @@ class EditDescriptionState extends State<EditDescription> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
+        backgroundColor: Theme.of(context).colorScheme.surface,
+        foregroundColor: Theme.of(context).colorScheme.onSurface,
         title: Text(AppLocalizations.of(context).editDescriptionTitle),
         actions: <Widget>[
-          IconButton(
-            icon: const Icon(Icons.save),
-            onPressed: _save,
-          ),
+          IconButton(icon: const Icon(Icons.save), onPressed: _save),
         ],
       ),
       body: RichTextEditor(

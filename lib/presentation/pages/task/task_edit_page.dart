@@ -8,6 +8,7 @@ import 'package:flutter_colorpicker/flutter_colorpicker.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:vikunja_app/core/di/network_provider.dart';
 import 'package:vikunja_app/core/di/repository_provider.dart';
+import 'package:vikunja_app/core/utils/color_extensions.dart';
 import 'package:vikunja_app/core/utils/priority.dart';
 import 'package:vikunja_app/core/utils/repeat_after_parse.dart';
 import 'package:vikunja_app/core/utils/repeat_after_unit.dart';
@@ -133,7 +134,13 @@ class TaskEditPageState extends ConsumerState<TaskEditPage> {
   }
 
   AppBar _buildAppBar() {
+    final bgColor = (_color != null && _color != Colors.black)
+        ? _color
+        : Theme.of(context).colorScheme.surface;
+    final textColor = bgColor!.contrastTextColor;
     return AppBar(
+      backgroundColor: bgColor,
+      foregroundColor: textColor,
       title: Text(AppLocalizations.of(context).editTaskTitle),
       actions: [
         if (_isSaving)

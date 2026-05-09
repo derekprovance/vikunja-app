@@ -2,6 +2,7 @@ import 'package:collection/collection.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:vikunja_app/core/di/locale_provider.dart';
 import 'package:vikunja_app/core/di/network_provider.dart';
@@ -14,11 +15,10 @@ import 'package:vikunja_app/domain/entities/project.dart';
 import 'package:vikunja_app/domain/entities/user.dart';
 import 'package:vikunja_app/domain/entities/version.dart';
 import 'package:vikunja_app/l10n/gen/app_localizations.dart';
+import 'package:vikunja_app/main.dart';
 import 'package:vikunja_app/presentation/manager/settings_controller.dart';
 import 'package:vikunja_app/presentation/pages/error_widget.dart';
 import 'package:vikunja_app/presentation/pages/loading_widget.dart';
-import 'package:flutter_svg/flutter_svg.dart';
-import 'package:vikunja_app/presentation/pages/login/login_page.dart';
 
 class SettingsPage extends ConsumerStatefulWidget {
   const SettingsPage({super.key});
@@ -54,7 +54,11 @@ class SettingsPageState extends ConsumerState<SettingsPage> {
         isSystemSelected &&
         platformLocale.languageCode != resolvedLocale.languageCode;
     return Scaffold(
-      appBar: AppBar(title: Text(l10n.settings)),
+      appBar: AppBar(
+        backgroundColor: Theme.of(context).colorScheme.surface,
+        foregroundColor: Theme.of(context).colorScheme.onSurface,
+        title: Text(l10n.settings),
+      ),
       body: settings.when(
         data: (settings) {
           durationTextController.text = settings.refreshInterval.toString();
@@ -418,7 +422,11 @@ class SettingsPageState extends ConsumerState<SettingsPage> {
                   .getLatestVersionTag();
               if (newestVersion == null && context.mounted) {
                 ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(content: Text(AppLocalizations.of(context).versionCheckError)),
+                  SnackBar(
+                    content: Text(
+                      AppLocalizations.of(context).versionCheckError,
+                    ),
+                  ),
                 );
               } else {
                 setState(() {
@@ -469,11 +477,9 @@ class SettingsPageState extends ConsumerState<SettingsPage> {
           ref.read(settingsRepositoryProvider).saveUserToken(null);
           ref.read(settingsRepositoryProvider).saveRefreshToken(null);
 
-          Navigator.of(context).popUntil((route) => route.isFirst);
-          Navigator.pushReplacement(
-            context,
-            MaterialPageRoute(builder: (buildContext) => LoginPage()),
-          );
+          globalNavigatorKey.currentState
+            ?..popUntil((route) => route.isFirst)
+            ..pushReplacementNamed('/login');
         },
       ),
     );

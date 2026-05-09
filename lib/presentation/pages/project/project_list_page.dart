@@ -58,6 +58,8 @@ class ProjectListPage extends ConsumerWidget {
             ),
           ),
           appBar: AppBar(
+            backgroundColor: Theme.of(context).colorScheme.surface,
+            foregroundColor: Theme.of(context).colorScheme.onSurface,
             title: Text(AppLocalizations.of(context).projectsTitle),
             actions: [
               IconButton(

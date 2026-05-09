@@ -26,7 +26,9 @@ class _CommentEditPageState extends ConsumerState<CommentEditPage> {
   @override
   void initState() {
     super.initState();
-    _editorState = EditorState(document: _initialDocument(widget.comment?.comment));
+    _editorState = EditorState(
+      document: _initialDocument(widget.comment?.comment),
+    );
     _editorScrollController = EditorScrollController(
       editorState: _editorState,
       shrinkWrap: false,
@@ -113,6 +115,8 @@ class _CommentEditPageState extends ConsumerState<CommentEditPage> {
     final l10n = AppLocalizations.of(context);
     return Scaffold(
       appBar: AppBar(
+        backgroundColor: Theme.of(context).colorScheme.surface,
+        foregroundColor: Theme.of(context).colorScheme.onSurface,
         title: Text(_isEditMode ? l10n.editCommentTitle : l10n.addCommentTitle),
         actions: [
           IconButton(

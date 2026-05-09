@@ -171,8 +171,8 @@ class _TaskDetailPageState extends ConsumerState<TaskDetailPage> {
       },
       child: Scaffold(
         appBar: AppBar(
-          backgroundColor: _task.effectiveColor,
-          foregroundColor: _task.textColor,
+          backgroundColor: _task.effectiveColor ?? theme.colorScheme.surface,
+          foregroundColor: _task.textColor ?? theme.colorScheme.onSurface,
           title: Text(l10n.taskDetail),
           actions: [
             PopupMenuButton<String>(
@@ -333,15 +333,28 @@ class _TaskDetailPageState extends ConsumerState<TaskDetailPage> {
     widgets.add(
       Padding(
         padding: const EdgeInsets.only(bottom: 4),
-        child: Text(l10n.description, style: theme.textTheme.labelLarge),
+        child: Row(
+          children: [
+            Text(l10n.description, style: theme.textTheme.labelLarge),
+            const Spacer(),
+            ExcludeSemantics(
+              child: Icon(
+                Icons.edit_outlined,
+                size: 16,
+                color: theme.colorScheme.onSurfaceVariant,
+              ),
+            ),
+          ],
+        ),
       ),
     );
     widgets.add(
       Padding(
         padding: const EdgeInsets.only(bottom: 16),
-        child: GestureDetector(
-          onTap: _editDescription,
-          child: Card(
+        child: Card(
+          clipBehavior: Clip.antiAlias,
+          child: InkWell(
+            onTap: _editDescription,
             child: Padding(
               padding: const EdgeInsets.all(12),
               child: stripHtml(_task.description).isEmpty

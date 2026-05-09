@@ -38,7 +38,7 @@ Production Play Store builds use the `production` flavor and are handled by CI/F
 
 Clean architecture with three layers — domain → data → presentation — plus core for cross-cutting concerns.
 
-- **`lib/domain/`** — entities (plain Dart) and abstract repository interfaces. No framework dependencies.
+- **`lib/domain/`** — entities and abstract repository interfaces. No framework dependencies.
 - **`lib/data/`** — DTOs (`*Dto` suffix), data sources, and concrete repository implementations. All JSON serialization is **manual** (no `json_serializable`). DTO↔entity conversion uses `toDomain()` / `fromDomain()` extensions.
 - **`lib/presentation/`** — Riverpod controllers (`manager/`), pages, and widgets.
 - **`lib/core/`** — DI providers, network client, OAuth, theming, utilities.

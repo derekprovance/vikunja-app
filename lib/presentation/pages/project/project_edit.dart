@@ -37,7 +37,13 @@ class ProjectEditPageState extends ConsumerState<ProjectEditPage> {
   Widget build(BuildContext ctx) {
     final l10n = AppLocalizations.of(ctx);
     return Scaffold(
-      appBar: AppBar(title: Text(l10n.editProjectTitle)),
+      appBar: AppBar(
+        backgroundColor:
+            widget.project.effectiveColor ?? Theme.of(ctx).colorScheme.surface,
+        foregroundColor:
+            widget.project.textColor ?? Theme.of(ctx).colorScheme.onSurface,
+        title: Text(l10n.editProjectTitle),
+      ),
       body: Builder(
         builder: (BuildContext context) => Form(
           key: _formKey,

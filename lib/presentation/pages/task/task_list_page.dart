@@ -192,12 +192,12 @@ class TaskListPageState extends ConsumerState<TaskListPage> {
     final isActive = filterAsync.value?.isActive ?? false;
 
     return AppBar(
+      backgroundColor: Theme.of(context).colorScheme.surface,
+      foregroundColor: Theme.of(context).colorScheme.onSurface,
       title: _buildProjectChip(null),
       actions: [
         IconButton(
-          icon: Icon(
-            isActive ? Icons.filter_list : Icons.filter_list_outlined,
-          ),
+          icon: Icon(isActive ? Icons.filter_list : Icons.filter_list_outlined),
           tooltip: AppLocalizations.of(context).filterTasks,
           onPressed: () => showModalBottomSheet(
             context: context,
@@ -226,6 +226,10 @@ class TaskListPageState extends ConsumerState<TaskListPage> {
     final isActive = filterAsync.value?.isActive ?? false;
 
     return AppBar(
+      backgroundColor:
+          project.effectiveColor ?? Theme.of(context).colorScheme.surface,
+      foregroundColor:
+          project.textColor ?? Theme.of(context).colorScheme.onSurface,
       title: title,
       actions: [
         if (hasViews && project.views.length >= 2)
@@ -260,9 +264,7 @@ class TaskListPageState extends ConsumerState<TaskListPage> {
                 .toList(),
           ),
         IconButton(
-          icon: Icon(
-            isActive ? Icons.filter_list : Icons.filter_list_outlined,
-          ),
+          icon: Icon(isActive ? Icons.filter_list : Icons.filter_list_outlined),
           tooltip: AppLocalizations.of(context).filterTasks,
           onPressed: () => showModalBottomSheet(
             context: context,
@@ -401,6 +403,7 @@ class TaskListPageState extends ConsumerState<TaskListPage> {
       );
     }
 
+    slivers.add(const SliverToBoxAdapter(child: SizedBox(height: 80)));
     return CustomScrollView(slivers: slivers);
   }
 

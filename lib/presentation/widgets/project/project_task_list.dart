@@ -63,14 +63,15 @@ class ProjectTaskList extends ConsumerWidget {
           );
         }
 
-        if (children.isNotEmpty) {
-          return CustomScrollView(slivers: children);
-        } else {
+        if (children.isEmpty) {
           return EmptyView(
             Icons.list,
             AppLocalizations.of(context).noTasksOrSubproject,
           );
         }
+
+        children.add(const SliverToBoxAdapter(child: SizedBox(height: 80)));
+        return CustomScrollView(slivers: children);
       },
       error: (err, _) => VikunjaErrorWidget(error: err),
       loading: () => const LoadingWidget(),
@@ -98,14 +99,14 @@ class ProjectTaskList extends ConsumerWidget {
                   ),
                   onTap: () => _navigateToDetail(context, subproject),
                 ),
-                if (subproject.color != null)
+                if (subproject.effectiveColor != null)
                   Positioned(
                     top: 0,
                     bottom: 0,
                     left: 0,
                     width: 4,
                     child: IgnorePointer(
-                      child: ColoredBox(color: subproject.color!),
+                      child: ColoredBox(color: subproject.effectiveColor!),
                     ),
                   ),
               ],

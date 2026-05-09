@@ -1,5 +1,5 @@
-import 'dart:ui';
-
+import 'package:flutter/material.dart';
+import 'package:vikunja_app/core/utils/color_extensions.dart';
 import 'package:vikunja_app/domain/entities/project_view.dart';
 import 'package:vikunja_app/domain/entities/user.dart';
 
@@ -32,6 +32,17 @@ class Project {
     updated,
   }) : created = created ?? DateTime.now(),
        updated = updated ?? DateTime.now();
+
+  /// Returns the effective color, treating black (0xFF000000) as "no color" (null).
+  Color? get effectiveColor {
+    return color != Colors.black ? color : null;
+  }
+
+  /// Returns black or white text color for readable contrast on this project's color.
+  /// Uses WCAG AA threshold for accessibility. Returns null if no effective color is set.
+  Color? get textColor {
+    return effectiveColor?.contrastTextColor;
+  }
 
   Project copyWith({
     int? id,
