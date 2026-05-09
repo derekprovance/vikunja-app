@@ -472,14 +472,30 @@ class SettingsPageState extends ConsumerState<SettingsPage> {
             color: theme.colorScheme.error,
           ),
         ),
-        onTap: () {
-          ref.read(settingsRepositoryProvider).saveServer(null);
-          ref.read(settingsRepositoryProvider).saveUserToken(null);
-          ref.read(settingsRepositoryProvider).saveRefreshToken(null);
+        onTap: () async {
+          try {
+            final settings = ref.read(settingsRepositoryProvider);
+            await settings.saveServer(null);
+            await settings.saveUserToken(null);
+            await settings.saveRefreshToken(null);
+          } catch (e) {
+            if (context.mounted) {
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(
+                  content: const Text('Failed to logout. Please try again.'),
+                ),
+              );
+            }
+          } finally {
+            ref.invalidate(authDataProvider);
+            ref.invalidate(clientProviderProvider);
+            ref.invalidate(currentUserProvider);
 
-          globalNavigatorKey.currentState
-            ?..popUntil((route) => route.isFirst)
-            ..pushReplacementNamed('/login');
+            globalNavigatorKey.currentState?.pushNamedAndRemoveUntil(
+              '/login',
+              (_) => false,
+            );
+          }
         },
       ),
     );
